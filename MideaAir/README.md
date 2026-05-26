@@ -62,7 +62,7 @@ Die Cloud-Zugangsdaten werden ausschließlich einmalig zur Token-Ermittlung genu
 
 | Einstellung | Beschreibung |
 |---|---|
-| App | `NetHome Plus`, `Midea Air`, `Ariston Clima` oder `MSmartHome` |
+| App | `NetHome Plus`, `Midea Air` oder `Ariston Clima` |
 | E-Mail-Adresse | Benutzername des Midea-Cloud-Accounts |
 | Passwort | Passwort des Midea-Cloud-Accounts |
 
