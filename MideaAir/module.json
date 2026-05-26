@@ -1,0 +1,13 @@
+{
+    "id": "{B4F7E2A9-8C3D-4F6B-9E1A-2D5C7F8B3E4A}",
+    "name": "MideaAir",
+    "description": "Steuert Midea Klimaanlagen und Entfeuchter lokal per LAN (V2/V3) oder via Cloud",
+    "type": 3,
+    "vendor": "Midea",
+    "prefix": "MA",
+    "url": "",
+    "aliases": ["Midea Air"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": []
+}
