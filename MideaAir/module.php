@@ -79,7 +79,7 @@ class MideaAir extends IPSModule
         $this->RegisterPropertyString('CloudPassword', '');
 
         // Update-Timer
-        $this->RegisterTimer('UpdateTimer', 0, 'MIDEA_Update($_IPS["TARGET"]);');
+        $this->RegisterTimer('UpdateTimer', 0, 'MA_Update($_IPS["TARGET"]);');
     }
 
     public function Destroy(): void

@@ -133,12 +133,12 @@
                 {
                     "type": "Button",
                     "caption": "Jetzt aktualisieren",
-                    "onClick": "MIDEA_Update($id);"
+                    "onClick": "MA_Update($id);"
                 },
                 {
                     "type": "Button",
                     "caption": "Capabilities ermitteln",
-                    "onClick": "echo MIDEA_DetectCapabilities($id);"
+                    "onClick": "echo MA_DetectCapabilities($id);"
                 }
             ]
         },
