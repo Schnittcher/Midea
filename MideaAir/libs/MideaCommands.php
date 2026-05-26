@@ -251,6 +251,19 @@ class MideaCommands
         return self::finalize(implode('', $d), 30);
     }
 
+    // ── Stromverbrauch (0xAC) ─────────────────────────────────────────────
+
+    /**
+     * Abfrage-Befehl für den Stromverbrauch (Electricity). 15 Bytes.
+     * Payload: 0x41 = Lesebefehl, 0x42 = Electricity-Subtyp, 0x01.
+     */
+    public static function airConditionerElectricityCommand(): string
+    {
+        $data = "\xAA\x0E\xAC\x00\x00\x00\x00\x00\x03\x04"
+              . "\x41\x42\x01\x00\x00";
+        return self::finalize($data);
+    }
+
     // ── B5-Fähigkeitsabfragen ─────────────────────────────────────────────
 
     /** Fähigkeitsabfrage-Befehl (B5). 15 Bytes, kein Sequenzbyte. */
@@ -429,5 +442,21 @@ class AirConditionerResponse
             $this->frostProtect = ($b[10] & 0x20) !== 0;
         }
         $this->comfortMode = isset($b[22]) ? ($b[22] & 0x01) !== 0 : false;
+    }
+}
+
+/**
+ * Parst die Antwort auf den Electricity-Befehl.
+ * b[1..3] = Leistung in 0,1-W-Schritten (24-Bit Little-Endian).
+ */
+class AirConditionerElectricityResponse
+{
+    public float $power;   // Watt
+
+    public function __construct(string $data)
+    {
+        $b           = array_values(unpack('C*', $data));
+        $raw         = ($b[1] ?? 0) | (($b[2] ?? 0) << 8) | (($b[3] ?? 0) << 16);
+        $this->power = $raw / 10.0;
     }
 }

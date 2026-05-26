@@ -174,6 +174,17 @@ class MideaAir extends IPSModule
                 } else {
                     $this->LogMessage("✗ Keine Antwort vom Gerät", KL_WARNING);
                 }
+
+                // Stromverbrauch abfragen wenn Variable vorhanden
+                if (@IPS_GetObjectIDByIdent('CurrentPower', $this->InstanceID) > 0) {
+                    $elCmd     = MideaCommands::airConditionerElectricityCommand();
+                    $elPayload = $this->sendCommand($elCmd);
+                    if ($elPayload !== null) {
+                        $el = new AirConditionerElectricityResponse($elPayload);
+                        $this->SetValue('CurrentPower', $el->power);
+                        $this->LogMessage("✓ Leistung: " . $el->power . " W", KL_MESSAGE);
+                    }
+                }
             }
 
             $this->LogMessage("UPDATE FERTIG", KL_MESSAGE);
@@ -723,6 +734,15 @@ class MideaAir extends IPSModule
                 'SUFFIX'       => ' %',
                 'DIGITS'       => 1,
             ], 55));
+
+        $this->registerOptionalVariable(
+            $this->cap($caps, $hasCaps, 'electricity'),
+            'CurrentPower',
+            fn() => $this->RegisterVariableFloat('CurrentPower', 'Leistung', [
+                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                'SUFFIX'       => ' W',
+                'DIGITS'       => 1,
+            ], 160));
     }
 
     /**
