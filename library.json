@@ -1,13 +1,12 @@
 {
     "id": "{A8CF3D17-5F2E-4B9A-8C6E-1D3F2A7B4E8C}",
-    "author": "Kai Schnittcher",
     "name": "Midea",
-    "description": "Midea Klimaanlage und Entfeuchter Integration für IP-Symcon.",
-    "version": "1.0",
-    "build":0,
-    "date": 1748131200,
-        "compatibility": {
+    "author": "Kai Schnittcher",
+    "url": "https://deinsmarthome.info",
+    "compatibility": {
         "build": 8.0
     },
-    "url": "https://deinsmarthome.info"
+    "version": "1.0",
+    "build": 0,
+    "date": 0
 }
