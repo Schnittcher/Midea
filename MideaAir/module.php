@@ -19,35 +19,9 @@ class MideaAir extends IPSModule
     const DEVICE_DEHUMIDIFIER = 'dehumidifier';
     const DEVICE_AIRCON       = 'aircon';
 
-    // Protokollversionen
-    const PROTO_AUTO = 0;
-    const PROTO_V2   = 2;
-    const PROTO_V3   = 3;
-
     // Netzwerk
-    const DISCOVERY_PORT  = 6445;
-    const TCP_PORT        = 6444;
-    const SOCKET_TIMEOUT  = 5;
-
-    // Display options (VARIABLE_PRESENTATION_ENUMERATION)
-    // Air conditioner: 20=Silent, 40=Low, 60=Medium, 80=High, 102=Auto, 127=Full
-    const FAN_SPEED_OPTIONS = [
-        ['Value' => 20,  'Caption' => 'Silent', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 40,  'Caption' => 'Low',    'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 60,  'Caption' => 'Medium', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 80,  'Caption' => 'High',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 102, 'Caption' => 'Auto',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 127, 'Caption' => 'Full',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-    ];
-
-    // Air conditioner without Medium (60) – for devices with fan_speed_value = 1
-    const FAN_SPEED_OPTIONS_BASIC = [
-        ['Value' => 20,  'Caption' => 'Silent', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 40,  'Caption' => 'Low',    'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 80,  'Caption' => 'High',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 102, 'Caption' => 'Auto',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 127, 'Caption' => 'Full',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-    ];
+    const TCP_PORT       = 6444;
+    const SOCKET_TIMEOUT = 5;
 
     // Dehumidifier: 3 levels only
     const DEHUMIDIFIER_FAN_SPEED_OPTIONS = [
