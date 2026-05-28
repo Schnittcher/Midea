@@ -422,6 +422,10 @@ class AirConditionerResponse
  *   b[0]   = 0xA0
  *   b[1-3] = Gesamtenergie: b[1]*10 + b[2] + b[3]/10 (kWh)
  *   b[7-9] = Momentanleistung: b[7]*10 + b[8] + b[9]/10 (W)
+ *
+ * Typ 0xB5 (capability-basierte Antwort):
+ *   b[0]   = 0xB5
+ *   b[19-20] = Momentanleistung (16-Bit Big-Endian, 0,01-W-Schritte)
  */
 class AirConditionerElectricityResponse
 {
@@ -433,8 +437,13 @@ class AirConditionerElectricityResponse
         $type = $b[0] ?? 0;
 
         if ($type === 0xC1) {
+            // 24-Bit Big-Endian, Einheit 0,1 W
             $raw         = (($b[7] ?? 0) << 16) | (($b[8] ?? 0) << 8) | ($b[9] ?? 0);
             $this->power = $raw / 10.0;
+        } elseif ($type === 0xB5) {
+            // 16-Bit Big-Endian an b[19..20], Einheit 0,01 W
+            $raw         = (($b[19] ?? 0) << 8) | ($b[20] ?? 0);
+            $this->power = $raw / 100.0;
         } else {
             // 0xA0 und andere: b[7]*10 + b[8] + b[9]/10
             $this->power = ($b[7] ?? 0) * 10 + ($b[8] ?? 0) + ($b[9] ?? 0) / 10.0;
