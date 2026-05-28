@@ -3,14 +3,14 @@
         {
             "type": "Select",
             "name": "DeviceType",
-            "caption": "Gerätetyp",
+            "caption": "Device Type",
             "options": [
                 {
-                    "label": "Entfeuchter (0xA1)",
+                    "label": "Dehumidifier (0xA1)",
                     "value": "dehumidifier"
                 },
                 {
-                    "label": "Klimaanlage (0xAC)",
+                    "label": "Air Conditioner (0xAC)",
                     "value": "aircon"
                 }
             ]
@@ -18,23 +18,23 @@
         {
             "type": "ValidationTextBox",
             "name": "IPAddress",
-            "caption": "IP-Adresse"
+            "caption": "IP Address"
         },
         {
             "type": "NumberSpinner",
             "name": "Port",
-            "caption": "TCP-Port",
+            "caption": "TCP Port",
             "minimum": 1,
             "maximum": 65535,
             "suffix": ""
         },
         {
             "type": "ExpansionPanel",
-            "caption": "Protokoll V3 (Token / Key)",
+            "caption": "Protocol V3 (Token / Key)",
             "items": [
                 {
                     "type": "Label",
-                    "caption": "V3-Geräte benötigen Token und Key für die lokale Authentifizierung.\nDiese können unten über den Cloud-Login automatisch ermittelt werden.\nV2-Geräte (ältere Firmware) benötigen kein Token – Felder einfach leer lassen."
+                    "caption": "V3 devices require Token and Key for local authentication.\nThese can be automatically determined below via Cloud login.\nV2 devices (older firmware) do not need a token – leave fields empty."
                 },
                 {
                     "type": "ValidationTextBox",
@@ -54,7 +54,7 @@
                 {
                     "type": "ValidationTextBox",
                     "name": "SerialNumber",
-                    "caption": "Seriennummer (optional, read-only)",
+                    "caption": "Serial Number (optional, read-only)",
                     "enabled": false
                 }
             ]
@@ -62,18 +62,123 @@
         {
             "type": "NumberSpinner",
             "name": "UpdateInterval",
-            "caption": "Aktualisierungsintervall",
-            "minimum": 10,
+            "caption": "Update Interval",
+            "minimum": 0,
             "maximum": 3600,
-            "suffix": " Sekunden"
+            "suffix": " Seconds"
         },
         {
             "type": "ExpansionPanel",
-            "caption": "Token automatisch ermitteln",
+            "caption": "Manual Configuration (Air Conditioner)",
             "items": [
                 {
                     "type": "Label",
-                    "caption": "Mit Midea-Cloud-Account anmelden um Token und Key automatisch zu ermitteln."
+                    "caption": "Features not reliably detectable via B5 query can be manually activated here.\nAfter changes click Apply – variables will be re-registered."
+                },
+                {
+                    "type": "Label",
+                    "bold": true,
+                    "caption": "Available Modes"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ModeAuto",
+                    "caption": "Auto (1)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ModeCool",
+                    "caption": "Cool (2)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ModeDry",
+                    "caption": "Dry (3)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ModeHeat",
+                    "caption": "Heat (4)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ModeFan",
+                    "caption": "Fan (5)"
+                },
+                {
+                    "type": "Label",
+                    "bold": true,
+                    "caption": "Additional Features"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasVerticalSwing",
+                    "caption": "Vertical Swing available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasHorizontalSwing",
+                    "caption": "Horizontal Swing available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "FanSpeedSilent",
+                    "caption": "Fan Speed Silent (20) available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "FanSpeedMedium",
+                    "caption": "Fan Speed Medium (60) available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasEcoMode",
+                    "caption": "Eco Mode available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasTurbo",
+                    "caption": "Turbo available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasPurifier",
+                    "caption": "Air Purifier available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasDryer",
+                    "caption": "Dryer available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasFrostProtect",
+                    "caption": "Frost Protection available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasShowScreen",
+                    "caption": "Display Control available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasIndoorHumidity",
+                    "caption": "Indoor Humidity Sensor available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HasCurrentPower",
+                    "caption": "Power Measurement available"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Auto-detect Token",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Log in with Midea Cloud account to automatically determine Token and Key."
                 },
                 {
                     "type": "Select",
@@ -97,24 +202,24 @@
                 {
                     "type": "ValidationTextBox",
                     "name": "CloudAccount",
-                    "caption": "E-Mail-Adresse"
+                    "caption": "Email Address"
                 },
                 {
                     "type": "PasswordTextBox",
                     "name": "CloudPassword",
-                    "caption": "Passwort"
+                    "caption": "Password"
                 },
                 {
                     "type": "RowLayout",
                     "items": [
                         {
                             "type": "Button",
-                            "caption": "1. ApplianceID ermitteln",
+                            "caption": "1. Get Appliance ID",
                             "onClick": "echo MA_DiscoverApplianceId($id);"
                         },
                         {
                             "type": "Button",
-                            "caption": "2. Token ermitteln",
+                            "caption": "2. Get Token",
                             "onClick": "echo MA_DiscoverToken($id);"
                         }
                     ]
@@ -128,23 +233,23 @@
             "items": [
                 {
                     "type": "Button",
-                    "caption": "Jetzt aktualisieren",
+                    "caption": "Update Now",
                     "onClick": "MA_Update($id);"
                 },
                 {
                     "type": "Button",
-                    "caption": "Capabilities ermitteln",
+                    "caption": "Detect Capabilities",
                     "onClick": "echo MA_DetectCapabilities($id);"
                 }
             ]
         },
         {
             "type": "Label",
-            "caption": "Spenden / Schenkung"
+            "caption": "Donations"
         },
         {
             "type": "Label",
-            "caption": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als Unterstützung für den Autor werden hier akzeptiert:    "
+            "caption": "This module is free for non-commercial use, donations to support the author are accepted here:    "
         },
         {
             "type": "RowLayout",
@@ -170,12 +275,12 @@
         {
             "code": 102,
             "icon": "active",
-            "caption": "Aktiv"
+            "caption": "Active"
         },
         {
             "code": 104,
             "icon": "inactive",
-            "caption": "IP-Adresse nicht konfiguriert"
+            "caption": "IP Address not configured"
         }
     ]
 }
