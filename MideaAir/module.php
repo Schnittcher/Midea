@@ -187,6 +187,7 @@ class MideaAir extends IPSModule
                     $elCmd     = MideaCommands::airConditionerElectricityCommand();
                     $elPayload = $this->sendCommand($elCmd);
                     if ($elPayload !== null) {
+                        $this->SendDebug("Update", "Electricity raw: " . bin2hex($elPayload), 0);
                         $el = new AirConditionerElectricityResponse($elPayload);
                         $this->SetValue('CurrentPower', $el->power);
                         $this->SendDebug("Update", "✓ Leistung: " . $el->power . " W", 0);

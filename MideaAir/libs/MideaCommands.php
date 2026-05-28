@@ -412,16 +412,32 @@ class AirConditionerResponse
 
 /**
  * Parst die Antwort auf den Electricity-Befehl.
- * b[1..3] = Leistung in 0,1-W-Schritten (24-Bit Little-Endian).
+ *
+ * Typ 0xC1 (neuere Geräte):
+ *   b[0]   = 0xC1
+ *   b[1-3] = Gesamtenergie (24-Bit Big-Endian, 0,1-kWh-Schritte)
+ *   b[7-9] = Momentanleistung (24-Bit Big-Endian, 0,1-W-Schritte)
+ *
+ * Typ 0xA0 (ältere Geräte):
+ *   b[0]   = 0xA0
+ *   b[1-3] = Gesamtenergie: b[1]*10 + b[2] + b[3]/10 (kWh)
+ *   b[7-9] = Momentanleistung: b[7]*10 + b[8] + b[9]/10 (W)
  */
 class AirConditionerElectricityResponse
 {
-    public float $power;   // Watt
+    public float $power;   // Watt (Momentanverbrauch)
 
     public function __construct(string $data)
     {
-        $b           = array_values(unpack('C*', $data));
-        $raw         = ($b[1] ?? 0) | (($b[2] ?? 0) << 8) | (($b[3] ?? 0) << 16);
-        $this->power = $raw / 10.0;
+        $b    = array_values(unpack('C*', $data));
+        $type = $b[0] ?? 0;
+
+        if ($type === 0xC1) {
+            $raw         = (($b[7] ?? 0) << 16) | (($b[8] ?? 0) << 8) | ($b[9] ?? 0);
+            $this->power = $raw / 10.0;
+        } else {
+            // 0xA0 und andere: b[7]*10 + b[8] + b[9]/10
+            $this->power = ($b[7] ?? 0) * 10 + ($b[8] ?? 0) + ($b[9] ?? 0) / 10.0;
+        }
     }
 }
