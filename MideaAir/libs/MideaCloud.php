@@ -78,12 +78,6 @@ class MideaCloud
         $this->deviceId = md5(uniqid('midea', true));
     }
 
-    /** Gibt die Liste der unterstützten App-Namen zurück. */
-    public static function supportedApps(): array
-    {
-        return array_keys(self::APPS);
-    }
-
     // ── Authentifizierung ─────────────────────────────────────────────────
 
     /** Führt den kompletten Login-Prozess durch. */

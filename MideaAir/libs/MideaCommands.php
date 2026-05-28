@@ -9,41 +9,6 @@ declare(strict_types=1);
  * data[0]=0x41/0x48, data[1]=Flags, data[2]=Mode, data[3]=FanSpeed, ...
  */
 
-/**
- * Konvertiert rohe Bytes zu CSV-String (wie Python: _encode_as_csv)
- * Bytes werden als signed (-128 bis 127), komma-getrennt
- * Beispiel: [0xAA, 0x33] → "-86,51"
- */
-function encodeAsCSV(string $data): string
-{
-    $values = [];
-    for ($i = 0; $i < strlen($data); $i++) {
-        $byte = ord($data[$i]);
-        // Konvertiere zu signed byte
-        if ($byte >= 128) {
-            $byte = $byte - 256;
-        }
-        $values[] = (string)$byte;
-    }
-    return implode(',', $values);
-}
-
-/**
- * Dekodiert CSV-String zurück zu rohen Bytes (wie Python: _decode_from_csv)
- */
-function decodeFromCSV(string $data): string
-{
-    $values = array_map('intval', explode(',', $data));
-    $result = '';
-    foreach ($values as $value) {
-        if ($value < 0) {
-            $value = $value + 256;
-        }
-        $result .= chr($value & 0xFF);
-    }
-    return $result;
-}
-
 class MideaCommands
 {
     private static int $sequence = 0;

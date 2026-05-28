@@ -9,10 +9,8 @@ class MideaCrypto
 {
     // Nachrichtentypen für das 8370-Protokoll (V3)
     const MSGTYPE_HANDSHAKE_REQUEST  = 0x0;
-    const MSGTYPE_HANDSHAKE_RESPONSE = 0x1;
     const MSGTYPE_ENCRYPTED_RESPONSE = 0x3;
     const MSGTYPE_ENCRYPTED_REQUEST  = 0x6;
-    const MSGTYPE_TRANSPARENT        = 0xF;
 
     const HDR_8370 = "\x83\x70";
     const HDR_ZZ   = "\x5A\x5A";
@@ -71,20 +69,6 @@ class MideaCrypto
         $this->iv      = str_repeat("\x00", 16);
     }
 
-    /**
-     * Setzt den Verschlüsselungsschlüssel für Cloud-API-Befehle.
-     * Wird verwendet für aesEncryptWithPadding() und aesDecryptWithPadding().
-     *
-     * @param string $key 16 Bytes binärer Schlüssel (z.B. aus deriveDataKey())
-     */
-    public function setEncryptionKey(string $key): void
-    {
-        if (strlen($key) !== 16) {
-            throw new RuntimeException('Verschlüsselungsschlüssel muss genau 16 Bytes sein, erhalten: ' . strlen($key));
-        }
-        $this->encKey = $key;
-    }
-
     // ── CRC8 ──────────────────────────────────────────────────────────────
 
     public static function crc8(string $data): int
@@ -117,30 +101,6 @@ class MideaCrypto
         return $result;
     }
 
-    /**
-     * AES-128-ECB Verschlüsselung mit automatischem PKCS7 Padding (für Cloud-API).
-     */
-    public function aesEncryptWithPadding(string $data): string
-    {
-        $result = openssl_encrypt($data, 'aes-128-ecb', $this->encKey, 0);  // flag=0 = automatisches PKCS7 Padding
-        if ($result === false) {
-            throw new RuntimeException('AES-ECB Verschlüsselung mit Padding fehlgeschlagen: ' . openssl_error_string());
-        }
-        return $result;
-    }
-
-    /**
-     * AES-128-ECB Entschlüsselung mit automatischem PKCS7 Unpadding (für Cloud-API).
-     */
-    public function aesDecryptWithPadding(string $data): string
-    {
-        $result = openssl_decrypt($data, 'aes-128-ecb', $this->encKey, 0);  // flag=0 = automatisches PKCS7 Unpadding
-        if ($result === false) {
-            throw new RuntimeException('AES-ECB Entschlüsselung mit Unpadding fehlgeschlagen: ' . openssl_error_string());
-        }
-        return $result;
-    }
-
     // ── AES-CBC (ohne Padding, für 8370-Protokoll) ────────────────────────
 
     private function getCbcCipher(string $key): string
@@ -169,36 +129,6 @@ class MideaCrypto
         $result = openssl_decrypt($data, $cipher, $key, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $this->iv);
         if ($result === false) {
             throw new RuntimeException('AES-CBC Entschlüsselung fehlgeschlagen: ' . openssl_error_string());
-        }
-        return $result;
-    }
-
-    /**
-     * Verschlüsselt einen String mit AES-256-CBC (für Cloud API).
-     * Mit PKCS7 Padding.
-     */
-    public function aesEncryptString(string $data, string $key): string
-    {
-        $cipher = $this->getCbcCipher($key);
-        // Mit PKCS7 Padding (flag = 0)
-        $result = openssl_encrypt($data, $cipher, $key, 0, $this->iv);
-        if ($result === false) {
-            throw new RuntimeException('AES String-Verschlüsselung fehlgeschlagen: ' . openssl_error_string());
-        }
-        return $result;
-    }
-
-    /**
-     * Entschlüsselt einen String mit AES-256-CBC (für Cloud API).
-     * Mit PKCS7 Unpadding.
-     */
-    public function aesDecryptString(string $data, string $key): string
-    {
-        $cipher = $this->getCbcCipher($key);
-        // Mit PKCS7 Unpadding (flag = 0)
-        $result = openssl_decrypt($data, $cipher, $key, 0, $this->iv);
-        if ($result === false) {
-            throw new RuntimeException('AES String-Entschlüsselung fehlgeschlagen: ' . openssl_error_string());
         }
         return $result;
     }
@@ -345,34 +275,6 @@ class MideaCrypto
         return hash('sha256', $loginHash);
     }
 
-    public function encryptIamPassword(string $loginId, string $password): string
-    {
-        $md1       = md5($password);
-        $md2       = md5($md1);
-        $loginHash = $loginId . $md2 . $this->appkey;
-        return hash('sha256', $loginHash);
-    }
-
-    /**
-     * Signatur für proxied APIs (MSmartHome v5).
-     * HMAC-SHA256(iotkey + data + sortedQuery + random, hmackey)
-     */
-    public function signProxied(string $data, string $random, string $iotkey, string $hmackey, array $query = []): string
-    {
-        $msg = $iotkey . $data;
-
-        if (!empty($query)) {
-            ksort($query);
-            foreach ($query as $k => $v) {
-                $msg .= $k . $v;
-            }
-        }
-
-        $msg .= $random;
-
-        return hash_hmac('sha256', $msg, $hmackey);
-    }
-
     public function sign(string $url, array $payload): string
     {
         $path = parse_url($url, PHP_URL_PATH) ?? '';
@@ -424,22 +326,6 @@ class MideaCrypto
         return $data;
     }
 
-    /** Leitet den Datenschlüssel aus dem Access-Token ab (proxied/MSmartHome). */
-    public function deriveDataKeyProxied(string $accessTokenHex, string $randomHex): array
-    {
-        $sha256    = hash('sha256', $this->appkey);
-        $key       = substr($sha256, 0, 16);
-        $keyIv     = substr($sha256, 16, 16);
-
-        $tokenBin  = hex2bin($accessTokenHex);
-        $dataKey   = openssl_decrypt($tokenBin, 'aes-128-cbc', $key, OPENSSL_RAW_DATA, $keyIv);
-
-        $randomBin = hex2bin($randomHex);
-        $dataIv    = openssl_decrypt($randomBin, 'aes-128-cbc', $key, OPENSSL_RAW_DATA, $keyIv);
-
-        return [$dataKey, $dataIv];
-    }
-
     /** Entschlüsselt einen hexkodierten String mit dem Datenschlüssel (ECB). */
     public function decryptDataString(string $hexData, string $dataKey): string
     {
@@ -451,22 +337,4 @@ class MideaCrypto
         return $result;
     }
 
-    // ── Status / Reset ────────────────────────────────────────────────────
-
-    public function resetTcpKey(): void
-    {
-        $this->tcpKey        = '';
-        $this->requestCount  = 0;
-        $this->responseCount = 0;
-    }
-
-    public function hasTcpKey(): bool
-    {
-        return $this->tcpKey !== '';
-    }
-
-    public function getAppkey(): string
-    {
-        return $this->appkey;
-    }
 }
