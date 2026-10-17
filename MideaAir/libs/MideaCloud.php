@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -10,6 +11,7 @@ declare(strict_types=1);
 class MideaCloud
 {
     // Bekannte Apps und ihre Zugangsdaten
+    // EU-Varianten nutzen mapp-eu.appsmb.com statt mapp.appsmb.com
     private const APPS = [
         'NetHome Plus' => [
             'appkey'  => '3742e9e5842d4ad59c2db887e12449f9',
@@ -17,10 +19,22 @@ class MideaCloud
             'apiurl'  => 'https://mapp.appsmb.com',
             'signkey' => 'xhdiwjnchekd4d512chdjx5d8e4c394D2D7S',
         ],
+        'NetHome Plus (EU)' => [
+            'appkey'  => '3742e9e5842d4ad59c2db887e12449f9',
+            'appid'   => 1017,
+            'apiurl'  => 'https://mapp-eu.appsmb.com',
+            'signkey' => 'xhdiwjnchekd4d512chdjx5d8e4c394D2D7S',
+        ],
         'Midea Air' => [
             'appkey'  => 'ff0cf6f5f0c3471de36341cab3f7a9af',
             'appid'   => 1117,
             'apiurl'  => 'https://mapp.appsmb.com',
+            'signkey' => 'xhdiwjnchekd4d512chdjx5d8e4c394D2D7S',
+        ],
+        'Midea Air (EU)' => [
+            'appkey'  => 'ff0cf6f5f0c3471de36341cab3f7a9af',
+            'appid'   => 1117,
+            'apiurl'  => 'https://mapp-eu.appsmb.com',
             'signkey' => 'xhdiwjnchekd4d512chdjx5d8e4c394D2D7S',
         ],
         'Ariston Clima' => [
@@ -31,22 +45,36 @@ class MideaCloud
         ],
     ];
 
-    private string      $account;
-    private string      $password;
-    private string      $appName;
-    private array       $appConfig;
+    public int $maxRetries = 3;
+    public float $requestTimeout = 10.0;
+
+    private string $account;
+    private string $password;
+    private string $appName;
+    private array $appConfig;
     private MideaCrypto $crypto;
 
-    private string $loginId   = '';
+    private string $loginId = '';
     private string $sessionId = '';
-    private string $dataKey   = '';
+    private string $dataKey = '';
     private string $deviceId;
 
     // Logger-Callback für IP-Symcon
     private $logger = null;
 
-    public int   $maxRetries      = 3;
-    public float $requestTimeout  = 10.0;
+    public function __construct(string $account, string $password, string $appName = 'NetHome Plus')
+    {
+        if (!isset(self::APPS[$appName])) {
+            throw new InvalidArgumentException("Unbekannte App: $appName. Gültig: " . implode(', ', array_keys(self::APPS)));
+        }
+        $this->account = $account;
+        $this->password = $password;
+        $this->appName = $appName;
+        $this->appConfig = self::APPS[$appName];
+
+        $this->crypto = new MideaCrypto($this->appConfig['appkey'], $this->appConfig['signkey']);
+        $this->deviceId = md5(uniqid('midea', true));
+    }
 
     /**
      * Setzt einen Logger-Callback für Meldungen.
@@ -57,40 +85,19 @@ class MideaCloud
         $this->logger = $callback;
     }
 
-    private function log(string $message, int $level = KL_MESSAGE): void
-    {
-        if ($this->logger !== null) {
-            call_user_func($this->logger, "[MideaCloud] $message", $level);
-        }
-    }
-
-    public function __construct(string $account, string $password, string $appName = 'NetHome Plus')
-    {
-        if (!isset(self::APPS[$appName])) {
-            throw new InvalidArgumentException("Unbekannte App: $appName. Gültig: " . implode(', ', array_keys(self::APPS)));
-        }
-        $this->account   = $account;
-        $this->password  = $password;
-        $this->appName   = $appName;
-        $this->appConfig = self::APPS[$appName];
-
-        $this->crypto   = new MideaCrypto($this->appConfig['appkey'], $this->appConfig['signkey']);
-        $this->deviceId = md5(uniqid('midea', true));
-    }
-
     // ── Authentifizierung ─────────────────────────────────────────────────
 
     /** Führt den kompletten Login-Prozess durch. */
     public function authenticate(): void
     {
-        $this->log("authenticate() START: app=" . $this->appName);
+        $this->log('authenticate() START: app=' . $this->appName);
 
         if (empty($this->loginId)) {
             $this->loginId = $this->getLoginId();
         }
 
-        $session         = $this->login();
-        $this->sessionId = (string)($session['sessionId'] ?? '');
+        $session = $this->login();
+        $this->sessionId = (string) ($session['sessionId'] ?? '');
 
         if (!empty($session['accessToken'])) {
             $this->dataKey = $this->crypto->deriveDataKey($session['accessToken']);
@@ -100,32 +107,7 @@ class MideaCloud
             throw new RuntimeException('Kein sessionId in Login-Antwort. Passwort falsch?');
         }
 
-        $this->log("authenticate() FERTIG");
-    }
-
-    private function getLoginId(): string
-    {
-        $url    = $this->appConfig['apiurl'] . '/v1/user/login/id/get';
-        $params = $this->buildBaseParams(['loginAccount' => $this->account]);
-        $result = $this->apiRequest('POST', $url, $params);
-
-        if (empty($result['loginId'])) {
-            throw new RuntimeException('loginId nicht in Antwort: ' . json_encode($result));
-        }
-
-        return (string)$result['loginId'];
-    }
-
-    private function login(): array
-    {
-        $url    = $this->appConfig['apiurl'] . '/v1/user/login';
-        $encPwd = $this->crypto->encryptPassword($this->loginId, $this->password);
-        $params = $this->buildBaseParams([
-            'loginAccount' => $this->account,
-            'password'     => $encPwd,
-        ]);
-
-        return $this->apiRequest('POST', $url, $params);
+        $this->log('authenticate() FERTIG');
     }
 
     // ── Token-Ermittlung ──────────────────────────────────────────────────
@@ -136,7 +118,7 @@ class MideaCloud
      */
     public function getToken(string $udpId): array
     {
-        $url    = $this->appConfig['apiurl'] . '/v1/iot/secure/getToken';
+        $url = $this->appConfig['apiurl'] . '/v1/iot/secure/getToken';
         $params = $this->buildBaseParams([
             'udpid'     => $udpId,
             'sessionId' => $this->sessionId,
@@ -144,7 +126,7 @@ class MideaCloud
 
         $this->log("getToken(): udpId=$udpId");
         $result = $this->apiRequest('POST', $url, $params);
-        $this->log("getToken() Antwort: " . json_encode($result));
+        $this->log('getToken() Antwort: ' . json_encode($result));
 
         if (isset($result['tokenlist']) && is_array($result['tokenlist'])) {
             foreach ($result['tokenlist'] as $entry) {
@@ -159,7 +141,7 @@ class MideaCloud
             }
         }
 
-        $this->log("getToken(): kein Token gefunden");
+        $this->log('getToken(): kein Token gefunden');
         return ['', ''];
     }
 
@@ -168,7 +150,7 @@ class MideaCloud
     /** Gibt alle registrierten Geräte des Accounts zurück. */
     public function listAppliances(): array
     {
-        $url    = $this->appConfig['apiurl'] . '/v1/appliance/user/list/get';
+        $url = $this->appConfig['apiurl'] . '/v1/appliance/user/list/get';
         $params = $this->buildBaseParams(['sessionId' => $this->sessionId]);
         $result = $this->apiRequest('POST', $url, $params);
 
@@ -179,14 +161,46 @@ class MideaCloud
                 $sn = $this->crypto->decryptDataString($item['sn'], $this->dataKey);
             }
             $appliances[] = [
-                'id'    => (string)($item['id'] ?? ''),
-                'name'  => (string)($item['name'] ?? ''),
+                'id'    => (string) ($item['id'] ?? ''),
+                'name'  => (string) ($item['name'] ?? ''),
                 'sn'    => $sn,
-                'type'  => (string)($item['type'] ?? ''),
-                'model' => (string)($item['modelNumber'] ?? ''),
+                'type'  => (string) ($item['type'] ?? ''),
+                'model' => (string) ($item['modelNumber'] ?? ''),
             ];
         }
         return $appliances;
+    }
+
+    private function log(string $message, int $level = KL_MESSAGE): void
+    {
+        if ($this->logger !== null) {
+            call_user_func($this->logger, "[MideaCloud] $message", $level);
+        }
+    }
+
+    private function getLoginId(): string
+    {
+        $url = $this->appConfig['apiurl'] . '/v1/user/login/id/get';
+        $params = $this->buildBaseParams(['loginAccount' => $this->account]);
+        $result = $this->apiRequest('POST', $url, $params);
+
+        if (empty($result['loginId'])) {
+            throw new RuntimeException('loginId nicht in Antwort: ' . json_encode($result));
+        }
+
+        return (string) $result['loginId'];
+    }
+
+    private function login(): array
+    {
+        $url = $this->appConfig['apiurl'] . '/v1/user/login';
+        $encPwd = $this->crypto->encryptPassword($this->loginId, $this->password);
+        $params = $this->buildBaseParams([
+            'loginAccount' => $this->account,
+            'password'     => $encPwd,
+        ]);
+
+        return $this->apiRequest('POST', $url, $params);
     }
 
     // ── HTTP-Hilfsmethoden ────────────────────────────────────────────────
@@ -194,11 +208,11 @@ class MideaCloud
     private function buildBaseParams(array $extra = []): array
     {
         $params = [
-            'appId'      => (string)$this->appConfig['appid'],
+            'appId'      => (string) $this->appConfig['appid'],
             'format'     => '2',
             'clientType' => '1',
             'language'   => 'en_US',
-            'src'        => (string)$this->appConfig['appid'],
+            'src'        => (string) $this->appConfig['appid'],
             'stamp'      => date('YmdHis'),
             'deviceId'   => 'c1acad8939ac0d7d',
         ];
@@ -217,14 +231,14 @@ class MideaCloud
         for ($attempt = 0; $attempt < $this->maxRetries; $attempt++) {
             try {
                 $responseJson = $this->httpRequest($method, $url, $params);
-                $response     = json_decode($responseJson, true);
+                $response = json_decode($responseJson, true);
 
                 if (!is_array($response)) {
                     throw new RuntimeException('Ungültige JSON-Antwort: ' . substr($responseJson, 0, 300));
                 }
 
                 $errorCode = $response['errorCode'] ?? $response['code'] ?? '0';
-                if ((string)$errorCode !== '0') {
+                if ((string) $errorCode !== '0') {
                     $msg = $response['msg'] ?? $response['message'] ?? "Fehler $errorCode";
                     throw new RuntimeException("Cloud-API Fehler $errorCode: $msg");
                 }
@@ -254,7 +268,7 @@ class MideaCloud
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, (int)ceil($this->requestTimeout));
+        curl_setopt($ch, CURLOPT_TIMEOUT, (int) ceil($this->requestTimeout));
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/x-www-form-urlencoded',
@@ -262,14 +276,14 @@ class MideaCloud
         ]);
 
         $response = curl_exec($ch);
-        $errno    = curl_errno($ch);
-        $error    = curl_error($ch);
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
         curl_close($ch);
 
         if ($errno !== 0 || $response === false) {
             throw new RuntimeException("HTTP-Fehler ($errno): $error");
         }
 
-        return (string)$response;
+        return (string) $response;
     }
 }

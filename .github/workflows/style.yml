@@ -1,0 +1,9 @@
+name: StylePHP
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  style:
+    uses: Schnittcher/Symcon_CI/.github/workflows/style.yml@v1

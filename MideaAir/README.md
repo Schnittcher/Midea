@@ -1,6 +1,4 @@
-[![Version](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/)
-![Version](https://img.shields.io/badge/Symcon%20Version-8.0%20%3E-blue.svg)
-[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Version](https://img.shields.io/badge/Symcon-PHPModul-red.svg)](https://www.symcon.de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/) ![Version](https://img.shields.io/badge/Symcon%20Version-9.0%20%3E-blue.svg) [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/) [![Check Style](https://github.com/Schnittcher/Midea/actions/workflows/style.yml/badge.svg)](https://github.com/Schnittcher/Midea/actions/workflows/style.yml) [![Tests](https://github.com/Schnittcher/Midea/actions/workflows/tests.yml/badge.svg)](https://github.com/Schnittcher/Midea/actions/workflows/tests.yml)
 
 # Midea
 
@@ -30,7 +28,7 @@ Die Cloud wird ausschließlich zur einmaligen Token-Ermittlung genutzt – danac
 
 ## 1. Voraussetzungen
 
-* mindestens IPS Version 8.0
+* mindestens IP-Symcon 9.0
 * PHP-Erweiterung **GMP** (für präzise Berechnung großer Geräte-IDs)
 * Midea Klimaanlage oder Midea Entfeuchter im lokalen Netzwerk
 * Feste IP-Adresse des Geräts (DHCP-Reservierung im Router empfohlen)
@@ -105,7 +103,7 @@ Die Cloud-Zugangsdaten werden ausschließlich einmalig zur Token-Ermittlung genu
 
 | Einstellung | Beschreibung |
 |---|---|
-| App | `NetHome Plus`, `Midea Air` oder `Ariston Clima` |
+| App | `NetHome Plus`, `NetHome Plus (EU)`, `Midea Air`, `Midea Air (EU)` oder `Ariston Clima` |
 | E-Mail-Adresse | Benutzername des Midea-Cloud-Accounts |
 | Passwort | Passwort des Midea-Cloud-Accounts |
 
@@ -137,7 +135,7 @@ Immer vorhanden, unabhängig von Capabilities und Checkboxen.
 | `Mode` | Modus | Integer | ✅ (nur aktivierte Modi, siehe Manuelle Konfiguration) |
 | `TargetTemperature` | Soll-Temperatur | Float | ✅ (16,0 – 31,0 °C) |
 | `IndoorTemperature` | Innentemperatur | Float | ❌ |
-| `OutdoorTemperature` | Außentemperatur | Float | ❌ (wird automatisch angelegt sobald Gerät den Wert liefert) |
+| `OutdoorTemperature` | Außentemperatur | Float | ❌ |
 | `ErrorCode` | Fehlercode | Integer | ❌ |
 
 ### Klimaanlage – Optionale Variablen

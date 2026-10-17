@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -8,12 +9,12 @@ declare(strict_types=1);
 class MideaCrypto
 {
     // Nachrichtentypen für das 8370-Protokoll (V3)
-    const MSGTYPE_HANDSHAKE_REQUEST  = 0x0;
-    const MSGTYPE_ENCRYPTED_RESPONSE = 0x3;
-    const MSGTYPE_ENCRYPTED_REQUEST  = 0x6;
+    public const MSGTYPE_HANDSHAKE_REQUEST = 0x0;
+    public const MSGTYPE_ENCRYPTED_RESPONSE = 0x3;
+    public const MSGTYPE_ENCRYPTED_REQUEST = 0x6;
 
-    const HDR_8370 = "\x83\x70";
-    const HDR_ZZ   = "\x5A\x5A";
+    public const HDR_8370 = "\x83\x70";
+    public const HDR_ZZ = "\x5A\x5A";
 
     // CRC8-Lookup-Tabelle (Polynom 0x854)
     private const CRC8_TABLE = [
@@ -56,17 +57,17 @@ class MideaCrypto
     private string $encKey;   // MD5(signkey), 16 Bytes → AES-128-Schlüssel
     private string $iv;       // 16 Null-Bytes als CBC-IV
     private string $tcpKey = '';
-    private int    $requestCount  = 0;
-    private int    $responseCount = 0;
+    private int $requestCount = 0;
+    private int $responseCount = 0;
 
     public function __construct(
-        string $appkey  = '3742e9e5842d4ad59c2db887e12449f9',
+        string $appkey = '3742e9e5842d4ad59c2db887e12449f9',
         string $signkey = 'xhdiwjnchekd4d512chdjx5d8e4c394D2D7S'
     ) {
-        $this->appkey  = $appkey;
+        $this->appkey = $appkey;
         $this->signkey = $signkey;
-        $this->encKey  = md5($signkey, true);      // 16 Bytes Binär
-        $this->iv      = str_repeat("\x00", 16);
+        $this->encKey = md5($signkey, true);      // 16 Bytes Binär
+        $this->iv = str_repeat("\x00", 16);
     }
 
     // ── CRC8 ──────────────────────────────────────────────────────────────
@@ -101,18 +102,6 @@ class MideaCrypto
         return $result;
     }
 
-    // ── AES-CBC (ohne Padding, für 8370-Protokoll) ────────────────────────
-
-    private function getCbcCipher(string $key): string
-    {
-        switch (strlen($key)) {
-            case 16: return 'aes-128-cbc';
-            case 24: return 'aes-192-cbc';
-            case 32: return 'aes-256-cbc';
-            default: throw new RuntimeException('Ungültige AES-Schlüssellänge: ' . strlen($key));
-        }
-    }
-
     public function aesCbcEncrypt(string $data, string $key): string
     {
         $cipher = $this->getCbcCipher($key);
@@ -140,17 +129,6 @@ class MideaCrypto
         return md5($data . $this->signkey, true);
     }
 
-    private function strxor(string $a, string $b): string
-    {
-        $len    = strlen($a);
-        $lenB   = strlen($b);
-        $result = '';
-        for ($i = 0; $i < $len; $i++) {
-            $result .= chr(ord($a[$i]) ^ ord($b[$i % $lenB]));
-        }
-        return $result;
-    }
-
     // ── TCP-Schlüssel (V3-Handshake) ──────────────────────────────────────
 
     public function deriveTcpKey(string $response, string $deviceKey): string
@@ -162,14 +140,14 @@ class MideaCrypto
             throw new RuntimeException('Paketlänge falsch: ' . strlen($response) . ' statt 64 Bytes');
         }
         $payload = substr($response, 0, 32);
-        $sign    = substr($response, 32, 32);
-        $plain   = $this->aesCbcDecrypt($payload, $deviceKey);
+        $sign = substr($response, 32, 32);
+        $plain = $this->aesCbcDecrypt($payload, $deviceKey);
         if (hash('sha256', $plain, true) !== $sign) {
             throw new RuntimeException('Paketsignatur stimmt nicht überein');
         }
-        $this->tcpKey         = $this->strxor($plain, $deviceKey);
-        $this->requestCount   = 0;
-        $this->responseCount  = 0;
+        $this->tcpKey = $this->strxor($plain, $deviceKey);
+        $this->requestCount = 0;
+        $this->responseCount = 0;
         return $this->tcpKey;
     }
 
@@ -178,14 +156,14 @@ class MideaCrypto
     public function encode8370(string $data, int $msgtype): string
     {
         $header = self::HDR_8370;
-        $size   = strlen($data);
-        $pad    = 0;
+        $size = strlen($data);
+        $pad = 0;
 
         $isEncrypted = in_array($msgtype, [self::MSGTYPE_ENCRYPTED_RESPONSE, self::MSGTYPE_ENCRYPTED_REQUEST], true);
 
         if ($isEncrypted) {
             if (($size + 2) % 16 !== 0) {
-                $pad   = 16 - (($size + 2) & 0xF);
+                $pad = 16 - (($size + 2) & 0xF);
                 $size += $pad + 32;
                 $data .= random_bytes($pad);
             }
@@ -231,16 +209,16 @@ class MideaCrypto
         $leftover = null;
         if (strlen($buf) > $size) {
             $leftover = substr($buf, $size);
-            $buf      = substr($buf, 0, $size);
+            $buf = substr($buf, 0, $size);
         }
 
         if ($header[4] !== "\x20") {
             throw new RuntimeException('Byte 4 ist nicht 0x20');
         }
 
-        $pad     = (ord($header[5]) >> 4) & 0xF;
+        $pad = (ord($header[5]) >> 4) & 0xF;
         $msgtype = ord($header[5]) & 0xF;
-        $data    = substr($buf, 6);
+        $data = substr($buf, 6);
 
         $isEncrypted = in_array($msgtype, [self::MSGTYPE_ENCRYPTED_RESPONSE, self::MSGTYPE_ENCRYPTED_REQUEST], true);
 
@@ -257,7 +235,7 @@ class MideaCrypto
         }
 
         $this->responseCount = (ord($data[0]) << 8) | ord($data[1]);
-        $data                = substr($data, 2);
+        $data = substr($data, 2);
 
         if ($leftover !== null) {
             [$packets, $incomplete] = $this->decode8370($leftover);
@@ -270,7 +248,7 @@ class MideaCrypto
 
     public function encryptPassword(string $loginId, string $password): string
     {
-        $sha1      = hash('sha256', $password);
+        $sha1 = hash('sha256', $password);
         $loginHash = $loginId . $sha1 . $this->appkey;
         return hash('sha256', $loginHash);
     }
@@ -315,6 +293,40 @@ class MideaCrypto
         return $dataKey;  // Gib als STRING zurück (kein binary!)
     }
 
+    /** Entschlüsselt einen hexkodierten String mit dem Datenschlüssel (ECB). */
+    public function decryptDataString(string $hexData, string $dataKey): string
+    {
+        $bin = hex2bin($hexData);
+        $result = openssl_decrypt($bin, 'aes-128-ecb', $dataKey, OPENSSL_RAW_DATA);
+        if ($result === false) {
+            return '';
+        }
+        return $result;
+    }
+
+    // ── AES-CBC (ohne Padding, für 8370-Protokoll) ────────────────────────
+
+    private function getCbcCipher(string $key): string
+    {
+        switch (strlen($key)) {
+            case 16: return 'aes-128-cbc';
+            case 24: return 'aes-192-cbc';
+            case 32: return 'aes-256-cbc';
+            default: throw new RuntimeException('Ungültige AES-Schlüssellänge: ' . strlen($key));
+        }
+    }
+
+    private function strxor(string $a, string $b): string
+    {
+        $len = strlen($a);
+        $lenB = strlen($b);
+        $result = '';
+        for ($i = 0; $i < $len; $i++) {
+            $result .= chr(ord($a[$i]) ^ ord($b[$i % $lenB]));
+        }
+        return $result;
+    }
+
     /** Entfernt PKCS7 Padding von dekryptierten Daten. */
     private function unpadPKCS7(string $data): string
     {
@@ -324,17 +336,6 @@ class MideaCrypto
             return substr($data, 0, $len - $pad);
         }
         return $data;
-    }
-
-    /** Entschlüsselt einen hexkodierten String mit dem Datenschlüssel (ECB). */
-    public function decryptDataString(string $hexData, string $dataKey): string
-    {
-        $bin    = hex2bin($hexData);
-        $result = openssl_decrypt($bin, 'aes-128-ecb', $dataKey, OPENSSL_RAW_DATA);
-        if ($result === false) {
-            return '';
-        }
-        return $result;
     }
 
 }

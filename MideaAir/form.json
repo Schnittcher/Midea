@@ -190,8 +190,16 @@
                             "value": "NetHome Plus"
                         },
                         {
+                            "label": "NetHome Plus (EU)",
+                            "value": "NetHome Plus (EU)"
+                        },
+                        {
                             "label": "Midea Air",
                             "value": "Midea Air"
+                        },
+                        {
+                            "label": "Midea Air (EU)",
+                            "value": "Midea Air (EU)"
                         },
                         {
                             "label": "Ariston Clima",
@@ -245,11 +253,11 @@
         },
         {
             "type": "Label",
-            "caption": "Donations"
+            "caption": "Spenden / Schenkung"
         },
         {
             "type": "Label",
-            "caption": "This module is free for non-commercial use, donations to support the author are accepted here:    "
+            "caption": "Dieses Modul ist für die nicht kommerzielle Nutzung kostenlos, Schenkungen als Unterstützung für den Autor werden hier akzeptiert:    "
         },
         {
             "type": "RowLayout",

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 require_once __DIR__ . '/libs/MideaCrypto.php';
@@ -13,24 +14,24 @@ require_once __DIR__ . '/libs/MideaCloud.php';
  *
  * VERSION: 2026-05-26 17:00 UTC (GMP Integer Fix)
  */
-class MideaAir extends IPSModule
+class MideaAir extends IPSModuleStrict
 {
     // Gerätetypen
-    const DEVICE_DEHUMIDIFIER = 'dehumidifier';
-    const DEVICE_AIRCON       = 'aircon';
+    public const DEVICE_DEHUMIDIFIER = 'dehumidifier';
+    public const DEVICE_AIRCON = 'aircon';
 
     // Netzwerk
-    const TCP_PORT       = 6444;
-    const SOCKET_TIMEOUT = 5;
+    public const TCP_PORT = 6444;
+    public const SOCKET_TIMEOUT = 5;
 
     // Dehumidifier: 3 levels only
-    const DEHUMIDIFIER_FAN_SPEED_OPTIONS = [
+    public const DEHUMIDIFIER_FAN_SPEED_OPTIONS = [
         ['Value' => 40,  'Caption' => 'Silent', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
         ['Value' => 80,  'Caption' => 'Medium', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
         ['Value' => 127, 'Caption' => 'High',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
     ];
 
-    const SWING_OPTIONS = [
+    public const SWING_OPTIONS = [
         ['Value' => 0, 'Caption' => 'Off',     'IconActive' => false, 'IconValue' => '', 'Color' => -1],
         ['Value' => 1, 'Caption' => 'Level 1', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
         ['Value' => 2, 'Caption' => 'Level 2', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
@@ -62,25 +63,25 @@ class MideaAir extends IPSModule
         $this->RegisterAttributeString('Capabilities', '{}');
 
         // Verfügbare Modi (Klimaanlage) – standardmäßig alle aktiv
-        $this->RegisterPropertyBoolean('ModeAuto',  true);
-        $this->RegisterPropertyBoolean('ModeCool',  true);
-        $this->RegisterPropertyBoolean('ModeDry',   true);
-        $this->RegisterPropertyBoolean('ModeHeat',  true);
-        $this->RegisterPropertyBoolean('ModeFan',   true);
+        $this->RegisterPropertyBoolean('ModeAuto', true);
+        $this->RegisterPropertyBoolean('ModeCool', true);
+        $this->RegisterPropertyBoolean('ModeDry', true);
+        $this->RegisterPropertyBoolean('ModeHeat', true);
+        $this->RegisterPropertyBoolean('ModeFan', true);
 
         // Manuelle Konfiguration (nicht per B5 erkennbar)
-        $this->RegisterPropertyBoolean('HasVerticalSwing',   false);
+        $this->RegisterPropertyBoolean('HasVerticalSwing', false);
         $this->RegisterPropertyBoolean('HasHorizontalSwing', false);
-        $this->RegisterPropertyBoolean('FanSpeedSilent',     false);  // Leise (20): selten, manuell aktivieren
-        $this->RegisterPropertyBoolean('FanSpeedMedium',     true);   // Mittel (60): meist vorhanden
-        $this->RegisterPropertyBoolean('HasTurbo',           false);
-        $this->RegisterPropertyBoolean('HasEcoMode',         false);
-        $this->RegisterPropertyBoolean('HasPurifier',        false);
-        $this->RegisterPropertyBoolean('HasDryer',           false);
-        $this->RegisterPropertyBoolean('HasFrostProtect',    false);
-        $this->RegisterPropertyBoolean('HasShowScreen',      false);
-        $this->RegisterPropertyBoolean('HasIndoorHumidity',  false);
-        $this->RegisterPropertyBoolean('HasCurrentPower',    false);
+        $this->RegisterPropertyBoolean('FanSpeedSilent', false);  // Leise (20): selten, manuell aktivieren
+        $this->RegisterPropertyBoolean('FanSpeedMedium', true);   // Mittel (60): meist vorhanden
+        $this->RegisterPropertyBoolean('HasTurbo', false);
+        $this->RegisterPropertyBoolean('HasEcoMode', false);
+        $this->RegisterPropertyBoolean('HasPurifier', false);
+        $this->RegisterPropertyBoolean('HasDryer', false);
+        $this->RegisterPropertyBoolean('HasFrostProtect', false);
+        $this->RegisterPropertyBoolean('HasShowScreen', false);
+        $this->RegisterPropertyBoolean('HasIndoorHumidity', false);
+        $this->RegisterPropertyBoolean('HasCurrentPower', false);
 
         // Polling
         $this->RegisterPropertyInteger('UpdateInterval', 60);
@@ -92,11 +93,6 @@ class MideaAir extends IPSModule
 
         // Update-Timer
         $this->RegisterTimer('UpdateTimer', 0, 'MA_Update($_IPS["TARGET"]);');
-    }
-
-    public function Destroy(): void
-    {
-        parent::Destroy();
     }
 
     public function ApplyChanges(): void
@@ -128,74 +124,74 @@ class MideaAir extends IPSModule
 
     public function Update(): void
     {
-        $this->SendDebug("Update", "START", 0);
+        $this->SendDebug('Update', 'START', 0);
 
         $deviceType = $this->ReadPropertyString('DeviceType');
-        $appId      = $this->ReadPropertyString('ApplianceID');
-        $ip         = $this->ReadPropertyString('IPAddress');
-        $port       = $this->ReadPropertyInteger('Port');
-        $token      = $this->ReadPropertyString('Token');
-        $key        = $this->ReadPropertyString('Key');
+        $appId = $this->ReadPropertyString('ApplianceID');
+        $ip = $this->ReadPropertyString('IPAddress');
+        $port = $this->ReadPropertyInteger('Port');
+        $token = $this->ReadPropertyString('Token');
+        $key = $this->ReadPropertyString('Key');
 
         $proto = (!empty($token) && !empty($key)) ? 'V3' : 'V2';
-        $this->SendDebug("Update", "Gerät: $appId | Typ: $deviceType | IP: $ip:$port | Protokoll: $proto", 0);
+        $this->SendDebug('Update', "Gerät: $appId | Typ: $deviceType | IP: $ip:$port | Protokoll: $proto", 0);
 
         try {
             if ($deviceType === self::DEVICE_DEHUMIDIFIER) {
-                $this->SendDebug("Update", "→ Sende Entfeuchter Statusanfrage", 0);
+                $this->SendDebug('Update', '→ Sende Entfeuchter Statusanfrage', 0);
                 try {
                     $cmd = MideaCommands::dehumidifierStatusCommand();
-                    $this->SendDebug("Update", "Befehl generiert: " . strlen($cmd) . " Bytes", 0);
+                    $this->SendDebug('Update', 'Befehl generiert: ' . strlen($cmd) . ' Bytes', 0);
                 } catch (Exception $e) {
-                    $this->LogMessage("Befehl-Fehler: " . $e->getMessage(), KL_ERROR);
+                    $this->LogMessage('Befehl-Fehler: ' . $e->getMessage(), KL_ERROR);
                     return;
                 }
 
                 $payload = $this->sendCommand($cmd);
-                $this->SendDebug("Update", "sendCommand() result: " . ($payload === null ? "null" : strlen($payload) . " Bytes"), 0);
+                $this->SendDebug('Update', 'sendCommand() result: ' . ($payload === null ? 'null' : strlen($payload) . ' Bytes'), 0);
 
                 if ($payload !== null) {
                     $state = new DehumidifierResponse($payload);
                     $this->applyDehumidifierState($state);
-                    $this->SendDebug("Update", "✓ Entfeuchter Status aktualisiert", 0);
+                    $this->SendDebug('Update', '✓ Entfeuchter Status aktualisiert', 0);
                 } else {
-                    $this->SendDebug("Update", "✗ Keine Antwort vom Gerät", 0);
+                    $this->SendDebug('Update', '✗ Keine Antwort vom Gerät', 0);
                 }
             } else {
-                $this->SendDebug("Update", "→ Sende AC Statusanfrage", 0);
+                $this->SendDebug('Update', '→ Sende AC Statusanfrage', 0);
                 try {
                     $cmd = MideaCommands::airConditionerStatusCommand();
-                    $this->SendDebug("Update", "Befehl generiert: " . strlen($cmd) . " Bytes", 0);
+                    $this->SendDebug('Update', 'Befehl generiert: ' . strlen($cmd) . ' Bytes', 0);
                 } catch (Exception $e) {
-                    $this->LogMessage("Befehl-Fehler: " . $e->getMessage(), KL_ERROR);
+                    $this->LogMessage('Befehl-Fehler: ' . $e->getMessage(), KL_ERROR);
                     return;
                 }
 
                 $payload = $this->sendCommand($cmd);
-                $this->SendDebug("Update", "sendCommand() result: " . ($payload === null ? "null" : strlen($payload) . " Bytes"), 0);
+                $this->SendDebug('Update', 'sendCommand() result: ' . ($payload === null ? 'null' : strlen($payload) . ' Bytes'), 0);
 
                 if ($payload !== null) {
                     $state = new AirConditionerResponse($payload);
                     $this->applyAirConditionerState($state);
-                    $this->SendDebug("Update", "✓ AC Status aktualisiert", 0);
+                    $this->SendDebug('Update', '✓ AC Status aktualisiert', 0);
                 } else {
-                    $this->SendDebug("Update", "✗ Keine Antwort vom Gerät", 0);
+                    $this->SendDebug('Update', '✗ Keine Antwort vom Gerät', 0);
                 }
 
                 // Stromverbrauch abfragen wenn Variable vorhanden
                 if (@IPS_GetObjectIDByIdent('CurrentPower', $this->InstanceID) > 0) {
-                    $elCmd     = MideaCommands::airConditionerElectricityCommand();
+                    $elCmd = MideaCommands::airConditionerElectricityCommand();
                     $elPayload = $this->sendCommand($elCmd);
                     if ($elPayload !== null) {
-                        $this->SendDebug("Update", "Electricity raw: " . bin2hex($elPayload), 0);
+                        $this->SendDebug('Update', 'Electricity raw: ' . bin2hex($elPayload), 0);
                         $el = new AirConditionerElectricityResponse($elPayload);
                         $this->SetValue('CurrentPower', $el->power);
-                        $this->SendDebug("Update", "✓ Leistung: " . $el->power . " W", 0);
+                        $this->SendDebug('Update', '✓ Leistung: ' . $el->power . ' W', 0);
                     }
                 }
             }
 
-            $this->SendDebug("Update", "FERTIG", 0);
+            $this->SendDebug('Update', 'FERTIG', 0);
 
         } catch (Exception $e) {
             $this->LogMessage('Update-Fehler: ' . $e->getMessage(), KL_ERROR);
@@ -203,7 +199,7 @@ class MideaAir extends IPSModule
         }
     }
 
-    public function RequestAction($Ident, $Value): void
+    public function RequestAction(string $Ident, mixed $Value): void
     {
         $deviceType = $this->ReadPropertyString('DeviceType');
         try {
@@ -223,9 +219,9 @@ class MideaAir extends IPSModule
      */
     public function DiscoverToken(): string
     {
-        $account  = $this->ReadPropertyString('CloudAccount');
+        $account = $this->ReadPropertyString('CloudAccount');
         $password = $this->ReadPropertyString('CloudPassword');
-        $appName  = $this->ReadPropertyString('CloudApp');
+        $appName = $this->ReadPropertyString('CloudApp');
         $applianceId = $this->ReadPropertyString('ApplianceID');
 
         if (empty($account) || empty($password)) {
@@ -237,23 +233,24 @@ class MideaAir extends IPSModule
         }
 
         try {
-            $this->SendDebug("Token", "=== START ===", 0);
+            $this->SendDebug('Token', '=== START ===', 0);
 
             // Cloud-Client
             $cloud = new MideaCloud($account, $password, $appName);
-            $cloud->setLogger(function($msg, $level) {
-                $this->SendDebug("Cloud", $msg, 0);
+            $cloud->setLogger(function ($msg, $level)
+            {
+                $this->SendDebug('Cloud', $msg, 0);
             });
 
             // Authentifiziere
-            $this->SendDebug("Token", "Authentifiziere mit $appName...", 0);
+            $this->SendDebug('Token', "Authentifiziere mit $appName...", 0);
             $cloud->authenticate();
-            $this->SendDebug("Token", "✓ Authentifizierung erfolgreich", 0);
+            $this->SendDebug('Token', '✓ Authentifizierung erfolgreich', 0);
 
             // Versuche beide UDP-IDs
-            $appId = (int)$applianceId;
+            $appId = (int) $applianceId;
 
-            $this->SendDebug("Token", "Berechne UDP-IDs für ApplianceID: $applianceId", 0);
+            $this->SendDebug('Token', "Berechne UDP-IDs für ApplianceID: $applianceId", 0);
 
             // LE
             $leBytes = '';
@@ -268,7 +265,7 @@ class MideaAir extends IPSModule
                 $leResult .= chr(ord($leFirst[$i]) ^ ord($leSecond[$i]));
             }
             $leUdpId = bin2hex($leResult);
-            $this->SendDebug("Token", "LE UDP-ID: $leUdpId", 0);
+            $this->SendDebug('Token', "LE UDP-ID: $leUdpId", 0);
 
             // BE
             $beBytes = '';
@@ -283,56 +280,56 @@ class MideaAir extends IPSModule
                 $beResult .= chr(ord($beFirst[$i]) ^ ord($beSecond[$i]));
             }
             $beUdpId = bin2hex($beResult);
-            $this->SendDebug("Token", "BE UDP-ID: $beUdpId", 0);
+            $this->SendDebug('Token', "BE UDP-ID: $beUdpId", 0);
 
             // Wie Python: Token holen UND sofort mit Gerät testen!
-            $this->SendDebug("Token", "Versuche Token zu ermitteln (und direkt testen)...", 0);
+            $this->SendDebug('Token', 'Versuche Token zu ermitteln (und direkt testen)...', 0);
 
-            $ip   = $this->ReadPropertyString('IPAddress');
+            $ip = $this->ReadPropertyString('IPAddress');
             $port = $this->ReadPropertyInteger('Port');
 
             foreach (['LE' => $leUdpId, 'BE' => $beUdpId] as $name => $udpId) {
-                $this->SendDebug("Token", "[$name] Versuche UDP-ID: $udpId", 0);
+                $this->SendDebug('Token', "[$name] Versuche UDP-ID: $udpId", 0);
 
                 try {
                     [$token, $key] = $cloud->getToken($udpId);
 
                     if (empty($token) || empty($key)) {
-                        $this->SendDebug("Token", "[$name] Kein Token von Cloud", 0);
+                        $this->SendDebug('Token', "[$name] Kein Token von Cloud", 0);
                         continue;
                     }
 
-                    $this->SendDebug("Token", "[$name] Token erhalten, teste Verbindung...", 0);
+                    $this->SendDebug('Token', "[$name] Token erhalten, teste Verbindung...", 0);
 
                     // DIREKT TESTEN: Genau wie Python _authenticate()
                     if ($this->testTokenConnection($ip, $port, $token, $key)) {
-                        $this->SendDebug("Token", "[$name] ✓ TOKEN FUNKTIONIERT!", 0);
+                        $this->SendDebug('Token', "[$name] ✓ TOKEN FUNKTIONIERT!", 0);
 
                         IPS_SetProperty($this->InstanceID, 'Token', $token);
                         IPS_SetProperty($this->InstanceID, 'Key', $key);
                         IPS_ApplyChanges($this->InstanceID);
 
-                        $this->SendDebug("Token", "=== ERFOLG ===", 0);
+                        $this->SendDebug('Token', '=== ERFOLG ===', 0);
 
                         // Capabilities direkt im Anschluss automatisch ermitteln
-                        $this->SendDebug("Token", "Capabilities automatisch ermitteln...", 0);
+                        $this->SendDebug('Token', 'Capabilities automatisch ermitteln...', 0);
                         $capsResult = $this->DetectCapabilities();
 
                         return "✓ Token ($name) ermittelt, getestet und gespeichert!\n\n" . $capsResult;
                     } else {
-                        $this->SendDebug("Token", "[$name] ✗ Token funktioniert nicht, versuche nächste...", 0);
+                        $this->SendDebug('Token', "[$name] ✗ Token funktioniert nicht, versuche nächste...", 0);
                     }
                 } catch (Exception $e) {
-                    $this->SendDebug("Token", "[$name] ✗ Fehler: " . $e->getMessage(), 0);
+                    $this->SendDebug('Token', "[$name] ✗ Fehler: " . $e->getMessage(), 0);
                 }
             }
 
-            $this->LogMessage("Token-Ermittlung: Kein Token funktioniert mit diesem Gerät", KL_ERROR);
-            return "✗ Kein Token funktioniert mit diesem Gerät";
+            $this->LogMessage('Token-Ermittlung: Kein Token funktioniert mit diesem Gerät', KL_ERROR);
+            return '✗ Kein Token funktioniert mit diesem Gerät';
 
         } catch (Exception $e) {
-            $this->LogMessage("Token-Ermittlung fehlgeschlagen: " . $e->getMessage(), KL_ERROR);
-            return "✗ Fehler: " . $e->getMessage();
+            $this->LogMessage('Token-Ermittlung fehlgeschlagen: ' . $e->getMessage(), KL_ERROR);
+            return '✗ Fehler: ' . $e->getMessage();
         }
     }
 
@@ -342,7 +339,7 @@ class MideaAir extends IPSModule
      */
     public function DetectCapabilities(): string
     {
-        $ip   = $this->ReadPropertyString('IPAddress');
+        $ip = $this->ReadPropertyString('IPAddress');
         $port = $this->ReadPropertyInteger('Port');
 
         if (empty($ip)) {
@@ -350,7 +347,7 @@ class MideaAir extends IPSModule
         }
 
         $deviceType = $this->ReadPropertyString('DeviceType');
-        $appType    = $deviceType === self::DEVICE_AIRCON ? 0xAC : 0xA1;
+        $appType = $deviceType === self::DEVICE_AIRCON ? 0xAC : 0xA1;
 
         try {
             // Nur den rohen Befehl erzeugen – sendCommand() übernimmt Paketierung und Verschlüsselung
@@ -361,14 +358,14 @@ class MideaAir extends IPSModule
                 return 'Fehler: Keine Antwort vom Gerät';
             }
 
-            $this->SendDebug("B5", "Antwort (" . strlen($raw) . " Bytes): " . bin2hex($raw), 0);
+            $this->SendDebug('B5', 'Antwort (' . strlen($raw) . ' Bytes): ' . bin2hex($raw), 0);
 
             // B5-Antwort parsen
             $caps = $this->parseB5Response($raw, $deviceType);
 
             // Speichern
             $this->WriteAttributeString('Capabilities', json_encode($caps));
-            $this->SendDebug("B5", "Capabilities erkannt: " . implode(', ', array_keys($caps)), 0);
+            $this->SendDebug('B5', 'Capabilities erkannt: ' . implode(', ', array_keys($caps)), 0);
 
             // Manuelle Properties aus B5-Ergebnis vorbelegen –
             // damit steuern die Checkboxen die Variablen, und der Nutzer kann sie anpassen
@@ -382,15 +379,90 @@ class MideaAir extends IPSModule
             $lines = ["✅ Capabilities vom Gerät erkannt:\n"];
             foreach ($caps as $key => $value) {
                 if (is_int($value)) {
-                $lines[] = sprintf("  %-30s = %d", $key, $value);
-            } else {
-                $lines[] = sprintf("  %-30s = %s", $key, $value ? 'JA' : 'NEIN');
-            }
+                    $lines[] = sprintf('  %-30s = %d', $key, $value);
+                } else {
+                    $lines[] = sprintf('  %-30s = %s', $key, $value ? 'JA' : 'NEIN');
+                }
             }
             return implode("\n", $lines);
 
         } catch (Exception $e) {
             return 'Fehler: ' . $e->getMessage();
+        }
+    }
+
+    /**
+     * Ermittelt die ApplianceID über die Cloud-Geräteliste.
+     * Falls nur ein Gerät vorhanden → automatisch setzen.
+     * Falls mehrere → Auswahl anzeigen.
+     */
+    public function DiscoverApplianceId(): string
+    {
+        $account = $this->ReadPropertyString('CloudAccount');
+        $password = $this->ReadPropertyString('CloudPassword');
+        $appName = $this->ReadPropertyString('CloudApp');
+
+        if (empty($account) || empty($password)) {
+            return 'Fehler: Cloud-Account und Passwort erforderlich';
+        }
+
+        try {
+            $cloud = new MideaCloud($account, $password, $appName);
+            $cloud->setLogger(function ($msg, $level)
+            {
+                $this->SendDebug('Cloud', $msg, 0);
+            });
+
+            $this->SendDebug('ApplianceID', 'Authentifiziere für Geräteliste...', 0);
+            $cloud->authenticate();
+
+            $appliances = $cloud->listAppliances();
+
+            if (empty($appliances)) {
+                return 'Keine Geräte im Cloud-Account gefunden.';
+            }
+
+            // Filtern: nur Klimaanlagen (0xAC) und Entfeuchter (0xA1)
+            $relevant = array_filter($appliances, function ($a)
+            {
+                $type = strtolower($a['type']);
+                return in_array($type, ['0xac', '0xa1', 'ac', 'a1', '172', '161']);
+            });
+
+            // Falls nur ein relevantes Gerät → automatisch setzen
+            if (count($relevant) === 1) {
+                $device = array_values($relevant)[0];
+                IPS_SetProperty($this->InstanceID, 'ApplianceID', $device['id']);
+                IPS_ApplyChanges($this->InstanceID);
+                $this->SendDebug('ApplianceID', "✓ automatisch gesetzt: {$device['id']}", 0);
+                return "✓ ApplianceID automatisch ermittelt:\n" .
+                       "  ID:   {$device['id']}\n" .
+                       "  Name: {$device['name']}\n" .
+                       "  Typ:  {$device['type']}\n" .
+                       "  SN:   {$device['sn']}\n\n" .
+                       "→ Jetzt 'Token ermitteln' klicken!";
+            }
+
+            // Mehrere Geräte → alle anzeigen
+            $lines = ["Gefundene Geräte (ApplianceID manuell eintragen):\n"];
+            foreach ($appliances as $dev) {
+                $lines[] = sprintf(
+                    '  ID: %-20s  Typ: %-6s  Name: %s',
+                    $dev['id'],
+                    $dev['type'],
+                    $dev['name']
+                );
+                if (!empty($dev['sn'])) {
+                    $lines[] = sprintf('      SN: %s', $dev['sn']);
+                }
+            }
+            $lines[] = "\n→ ApplianceID oben im Feld 'Appliance ID' eintragen, dann 'Token ermitteln' klicken.";
+
+            return implode("\n", $lines);
+
+        } catch (Exception $e) {
+            $this->LogMessage('ApplianceID-Ermittlung fehlgeschlagen: ' . $e->getMessage(), KL_ERROR);
+            return '✗ Fehler: ' . $e->getMessage();
         }
     }
 
@@ -413,16 +485,22 @@ class MideaAir extends IPSModule
             'HasCurrentPower'   => 'electricity',
         ];
         foreach ($map as $property => $capKey) {
-            IPS_SetProperty($this->InstanceID, $property, (bool)($caps[$capKey] ?? false));
+            IPS_SetProperty($this->InstanceID, $property, (bool) ($caps[$capKey] ?? false));
         }
 
         // Vertikaler Swing: fan_swing ODER has_vertical_fan
-        IPS_SetProperty($this->InstanceID, 'HasVerticalSwing',
-            (bool)(($caps['fan_swing'] ?? false) || ($caps['has_vertical_fan'] ?? false)));
+        IPS_SetProperty(
+            $this->InstanceID,
+            'HasVerticalSwing',
+            (bool) (($caps['fan_swing'] ?? false) || ($caps['has_vertical_fan'] ?? false))
+        );
 
         // Horizontaler Swing
-        IPS_SetProperty($this->InstanceID, 'HasHorizontalSwing',
-            (bool)($caps['has_horizontal_fan'] ?? false));
+        IPS_SetProperty(
+            $this->InstanceID,
+            'HasHorizontalSwing',
+            (bool) ($caps['has_horizontal_fan'] ?? false)
+        );
 
         // FanSpeedSilent / FanSpeedMedium werden NICHT aus B5 gesetzt –
         // B5 liefert dafür keine zuverlässigen Werte, daher rein manuelle Steuerung.
@@ -479,7 +557,7 @@ class MideaAir extends IPSModule
         }
 
         $count = ord($data[1]);
-        $caps  = [];
+        $caps = [];
         $i = 2;
 
         for ($n = 0; $n < $count && $i + 3 <= strlen($data) - 1; $n++) {
@@ -491,84 +569,13 @@ class MideaAir extends IPSModule
                 // Rohwert für fan_speed separat speichern (zur Stufenerkennung)
                 if ($name === 'fan_speed') {
                     $caps['fan_speed_value'] = $val;
-                    $this->SendDebug("B5", "fan_speed Rohwert: $val", 0);
+                    $this->SendDebug('B5', "fan_speed Rohwert: $val", 0);
                 }
             }
             $i += 4;
         }
 
         return $caps;
-    }
-
-    /**
-     * Ermittelt die ApplianceID über die Cloud-Geräteliste.
-     * Falls nur ein Gerät vorhanden → automatisch setzen.
-     * Falls mehrere → Auswahl anzeigen.
-     */
-    public function DiscoverApplianceId(): string
-    {
-        $account  = $this->ReadPropertyString('CloudAccount');
-        $password = $this->ReadPropertyString('CloudPassword');
-        $appName  = $this->ReadPropertyString('CloudApp');
-
-        if (empty($account) || empty($password)) {
-            return 'Fehler: Cloud-Account und Passwort erforderlich';
-        }
-
-        try {
-            $cloud = new MideaCloud($account, $password, $appName);
-            $cloud->setLogger(function($msg, $level) {
-                $this->SendDebug("Cloud", $msg, 0);
-            });
-
-            $this->SendDebug("ApplianceID", "Authentifiziere für Geräteliste...", 0);
-            $cloud->authenticate();
-
-            $appliances = $cloud->listAppliances();
-
-            if (empty($appliances)) {
-                return "Keine Geräte im Cloud-Account gefunden.";
-            }
-
-            // Filtern: nur Klimaanlagen (0xAC) und Entfeuchter (0xA1)
-            $relevant = array_filter($appliances, function($a) {
-                $type = strtolower($a['type']);
-                return in_array($type, ['0xac', '0xa1', 'ac', 'a1', '172', '161']);
-            });
-
-            // Falls nur ein relevantes Gerät → automatisch setzen
-            if (count($relevant) === 1) {
-                $device = array_values($relevant)[0];
-                IPS_SetProperty($this->InstanceID, 'ApplianceID', $device['id']);
-                IPS_ApplyChanges($this->InstanceID);
-                $this->SendDebug("ApplianceID", "✓ automatisch gesetzt: {$device['id']}", 0);
-                return "✓ ApplianceID automatisch ermittelt:\n" .
-                       "  ID:   {$device['id']}\n" .
-                       "  Name: {$device['name']}\n" .
-                       "  Typ:  {$device['type']}\n" .
-                       "  SN:   {$device['sn']}\n\n" .
-                       "→ Jetzt 'Token ermitteln' klicken!";
-            }
-
-            // Mehrere Geräte → alle anzeigen
-            $lines = ["Gefundene Geräte (ApplianceID manuell eintragen):\n"];
-            foreach ($appliances as $dev) {
-                $lines[] = sprintf(
-                    "  ID: %-20s  Typ: %-6s  Name: %s",
-                    $dev['id'], $dev['type'], $dev['name']
-                );
-                if (!empty($dev['sn'])) {
-                    $lines[] = sprintf("      SN: %s", $dev['sn']);
-                }
-            }
-            $lines[] = "\n→ ApplianceID oben im Feld 'Appliance ID' eintragen, dann 'Token ermitteln' klicken.";
-
-            return implode("\n", $lines);
-
-        } catch (Exception $e) {
-            $this->LogMessage("ApplianceID-Ermittlung fehlgeschlagen: " . $e->getMessage(), KL_ERROR);
-            return "✗ Fehler: " . $e->getMessage();
-        }
     }
 
     // ── Variablen-Registrierung ───────────────────────────────────────────
@@ -665,7 +672,7 @@ class MideaAir extends IPSModule
 
     private function RegisterAirConditionerVariables(): void
     {
-        $caps    = json_decode($this->ReadAttributeString('Capabilities'), true) ?: [];
+        $caps = json_decode($this->ReadAttributeString('Capabilities'), true) ?: [];
         $hasCaps = !empty($caps);
 
         // ── Core variables (always present) ──────────────────────────────
@@ -726,105 +733,126 @@ class MideaAir extends IPSModule
         $withSilent = $this->ReadPropertyBoolean('FanSpeedSilent');
         $withMedium = $this->ReadPropertyBoolean('FanSpeedMedium');
         $fanOptions = [];
-        if ($withSilent)  { $fanOptions[] = ['Value' => 20,  'Caption' => $this->Translate('Silent'), 'IconActive' => false, 'IconValue' => '', 'Color' => -1]; }
-                            $fanOptions[] = ['Value' => 40,  'Caption' => $this->Translate('Low'),    'IconActive' => false, 'IconValue' => '', 'Color' => -1];
-        if ($withMedium)  { $fanOptions[] = ['Value' => 60,  'Caption' => $this->Translate('Medium'), 'IconActive' => false, 'IconValue' => '', 'Color' => -1]; }
-                            $fanOptions[] = ['Value' => 80,  'Caption' => $this->Translate('High'),   'IconActive' => false, 'IconValue' => '', 'Color' => -1];
-                            $fanOptions[] = ['Value' => 102, 'Caption' => $this->Translate('Auto'),   'IconActive' => false, 'IconValue' => '', 'Color' => -1];
-                            $fanOptions[] = ['Value' => 127, 'Caption' => $this->Translate('Full'),   'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+        if ($withSilent) {
+            $fanOptions[] = ['Value' => 20,  'Caption' => $this->Translate('Silent'), 'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+        }
+        $fanOptions[] = ['Value' => 40,  'Caption' => $this->Translate('Low'),    'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+        if ($withMedium) {
+            $fanOptions[] = ['Value' => 60,  'Caption' => $this->Translate('Medium'), 'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+        }
+        $fanOptions[] = ['Value' => 80,  'Caption' => $this->Translate('High'),   'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+        $fanOptions[] = ['Value' => 102, 'Caption' => $this->Translate('Auto'),   'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+        $fanOptions[] = ['Value' => 127, 'Caption' => $this->Translate('Full'),   'IconActive' => false, 'IconValue' => '', 'Color' => -1];
 
         $this->registerOptionalVariable(
             $this->cap($caps, $hasCaps, 'fan_speed'),
             'FanSpeed',
-            fn() => $this->RegisterVariableInteger('FanSpeed', $this->Translate('Fan Speed'), [
+            fn () => $this->RegisterVariableInteger('FanSpeed', $this->Translate('Fan Speed'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
                 'OPTIONS'      => json_encode($fanOptions),
             ], 40),
-            fn() => $this->EnableAction('FanSpeed'));
+            fn () => $this->EnableAction('FanSpeed')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasVerticalSwing'),
             'VerticalSwing',
-            fn() => $this->RegisterVariableInteger('VerticalSwing', $this->Translate('Vertical Swing'), [
+            fn () => $this->RegisterVariableInteger('VerticalSwing', $this->Translate('Vertical Swing'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
                 'OPTIONS'      => $swingOptions,
             ], 70),
-            fn() => $this->EnableAction('VerticalSwing'));
+            fn () => $this->EnableAction('VerticalSwing')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasHorizontalSwing'),
             'HorizontalSwing',
-            fn() => $this->RegisterVariableInteger('HorizontalSwing', $this->Translate('Horizontal Swing'), [
+            fn () => $this->RegisterVariableInteger('HorizontalSwing', $this->Translate('Horizontal Swing'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
                 'OPTIONS'      => $swingOptions,
             ], 80),
-            fn() => $this->EnableAction('HorizontalSwing'));
+            fn () => $this->EnableAction('HorizontalSwing')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasEcoMode'),
             'EcoMode',
-            fn() => $this->RegisterVariableBoolean('EcoMode', $this->Translate('Eco Mode'), [
+            fn () => $this->RegisterVariableBoolean('EcoMode', $this->Translate('Eco Mode'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             ], 90),
-            fn() => $this->EnableAction('EcoMode'));
+            fn () => $this->EnableAction('EcoMode')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasTurbo'),
             'Turbo',
-            fn() => $this->RegisterVariableBoolean('Turbo', $this->Translate('Turbo'), [
+            fn () => $this->RegisterVariableBoolean('Turbo', $this->Translate('Turbo'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             ], 100),
-            fn() => $this->EnableAction('Turbo'));
+            fn () => $this->EnableAction('Turbo')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasPurifier'),
             'Purifier',
-            fn() => $this->RegisterVariableBoolean('Purifier', $this->Translate('Air Purifier'), [
+            fn () => $this->RegisterVariableBoolean('Purifier', $this->Translate('Air Purifier'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             ], 110),
-            fn() => $this->EnableAction('Purifier'));
+            fn () => $this->EnableAction('Purifier')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasDryer'),
             'Dryer',
-            fn() => $this->RegisterVariableBoolean('Dryer', $this->Translate('Dryer'), [
+            fn () => $this->RegisterVariableBoolean('Dryer', $this->Translate('Dryer'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             ], 120),
-            fn() => $this->EnableAction('Dryer'));
+            fn () => $this->EnableAction('Dryer')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasFrostProtect'),
             'FrostProtect',
-            fn() => $this->RegisterVariableBoolean('FrostProtect', $this->Translate('Frost Protection'), [
+            fn () => $this->RegisterVariableBoolean('FrostProtect', $this->Translate('Frost Protection'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             ], 130),
-            fn() => $this->EnableAction('FrostProtect'));
+            fn () => $this->EnableAction('FrostProtect')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasShowScreen'),
             'ShowScreen',
-            fn() => $this->RegisterVariableBoolean('ShowScreen', $this->Translate('Display'), [
+            fn () => $this->RegisterVariableBoolean('ShowScreen', $this->Translate('Display'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             ], 150),
-            fn() => $this->EnableAction('ShowScreen'));
+            fn () => $this->EnableAction('ShowScreen')
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasIndoorHumidity'),
             'IndoorHumidity',
-            fn() => $this->RegisterVariableFloat('IndoorHumidity', $this->Translate('Indoor Humidity'), [
+            fn () => $this->RegisterVariableFloat('IndoorHumidity', $this->Translate('Indoor Humidity'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
                 'SUFFIX'       => ' %',
                 'DIGITS'       => 1,
-            ], 55));
+            ], 55)
+        );
 
         $this->registerOptionalVariable(
             !$hasCaps || $this->ReadPropertyBoolean('HasCurrentPower'),
             'CurrentPower',
-            fn() => $this->RegisterVariableFloat('CurrentPower', $this->Translate('Power'), [
+            fn () => $this->RegisterVariableFloat('CurrentPower', $this->Translate('Power'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
                 'SUFFIX'       => ' W',
                 'DIGITS'       => 1,
-            ], 160));
+            ], 160)
+        );
+
+        $this->RegisterVariableFloat('OutdoorTemperature', $this->Translate('Outdoor Temperature'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'SUFFIX'       => ' °C',
+            'DIGITS'       => 1,
+        ], 60);
     }
 
     /**
@@ -852,7 +880,7 @@ class MideaAir extends IPSModule
             $varId = @IPS_GetObjectIDByIdent($ident, $this->InstanceID);
             if ($varId !== false && $varId > 0) {
                 IPS_DeleteVariable($varId);
-                $this->SendDebug("Variables", "Variable '$ident' gelöscht (nicht unterstützt)", 0);
+                $this->SendDebug('Variables', "Variable '$ident' gelöscht (nicht unterstützt)", 0);
             }
         }
     }
@@ -871,11 +899,11 @@ class MideaAir extends IPSModule
         return false;
     }
 
-
     /** Übersetzt die Caption jedes Options-Eintrags via locale.json. */
     private function translateOptions(array $options): array
     {
-        return array_map(function (array $opt): array {
+        return array_map(function (array $opt): array
+        {
             $opt['Caption'] = $this->Translate($opt['Caption']);
             return $opt;
         }, $options);
@@ -885,57 +913,51 @@ class MideaAir extends IPSModule
 
     private function applyDehumidifierState(DehumidifierResponse $s): void
     {
-        $this->SetValue('Running',          $s->runStatus);
-        $this->SetValue('Mode',             $s->mode);
-        $this->SetValue('FanSpeed',         $s->fanSpeed);
-        $this->SetValue('TargetHumidity',   (int)round($s->targetHumidity));
-        $this->SetValue('CurrentHumidity',  $s->currentHumidity);
+        $this->SetValue('Running', $s->runStatus);
+        $this->SetValue('Mode', $s->mode);
+        $this->SetValue('FanSpeed', $s->fanSpeed);
+        $this->SetValue('TargetHumidity', (int) round($s->targetHumidity));
+        $this->SetValue('CurrentHumidity', $s->currentHumidity);
         $this->SetValue('IndoorTemperature', $s->indoorTemperature);
-        $this->SetValue('IonMode',          $s->ionMode);
-        $this->SetValue('Pump',             $s->pumpSwitch);
-        $this->SetValue('SleepMode',        $s->sleepSwitch);
-        $this->SetValue('VerticalSwing',    $s->verticalSwing);
-        $this->SetValue('TankFull',         $s->tankFull);
-        $this->SetValue('TankLevel',        $s->tankLevel);
-        $this->SetValue('FilterIndicator',  $s->filterIndicator);
-        $this->SetValue('Defrosting',       $s->defrosting);
-        $this->SetValue('ErrorCode',        $s->errCode);
+        $this->SetValue('IonMode', $s->ionMode);
+        $this->SetValue('Pump', $s->pumpSwitch);
+        $this->SetValue('SleepMode', $s->sleepSwitch);
+        $this->SetValue('VerticalSwing', $s->verticalSwing);
+        $this->SetValue('TankFull', $s->tankFull);
+        $this->SetValue('TankLevel', $s->tankLevel);
+        $this->SetValue('FilterIndicator', $s->filterIndicator);
+        $this->SetValue('Defrosting', $s->defrosting);
+        $this->SetValue('ErrorCode', $s->errCode);
     }
 
     private function applyAirConditionerState(AirConditionerResponse $s): void
     {
         // ── Basis-Variablen (immer vorhanden) ────────────────────────────
-        $this->SetValue('Running',           $s->runStatus);
-        $this->SetValue('Mode',              $s->mode);
+        $this->SetValue('Running', $s->runStatus);
+        $this->SetValue('Mode', $s->mode);
         $this->SetValue('TargetTemperature', $s->targetTemperature);
-        $this->SetValue('ErrorCode',         $s->errCode);
+        $this->SetValue('ErrorCode', $s->errCode);
 
         if ($s->indoorTemperature !== null) {
             $this->SetValue('IndoorTemperature', $s->indoorTemperature);
         }
 
         // ── Optionale Variablen (nur setzen wenn Variable existiert) ─────
-        $this->setSafeValue('FanSpeed',          $s->fanSpeed);
-        $this->setSafeValue('VerticalSwing',      $s->verticalSwing);
-        $this->setSafeValue('HorizontalSwing',    $s->horizontalSwing);
-        $this->setSafeValue('EcoMode',            $s->eco);
-        $this->setSafeValue('Turbo',              $s->turbo);
-        $this->setSafeValue('Purifier',           $s->purifier);
-        $this->setSafeValue('Dryer',              $s->dryer);
-        $this->setSafeValue('FrostProtect',       $s->frostProtect);
-        $this->setSafeValue('ShowScreen',         $s->showScreen);
+        $this->setSafeValue('FanSpeed', $s->fanSpeed);
+        $this->setSafeValue('VerticalSwing', $s->verticalSwing);
+        $this->setSafeValue('HorizontalSwing', $s->horizontalSwing);
+        $this->setSafeValue('EcoMode', $s->eco);
+        $this->setSafeValue('Turbo', $s->turbo);
+        $this->setSafeValue('Purifier', $s->purifier);
+        $this->setSafeValue('Dryer', $s->dryer);
+        $this->setSafeValue('FrostProtect', $s->frostProtect);
+        $this->setSafeValue('ShowScreen', $s->showScreen);
 
         if ($s->outdoorTemperature !== null) {
-            // Variable erst beim ersten echten Wert anlegen
-            $this->RegisterVariableFloat('OutdoorTemperature', $this->Translate('Outdoor Temperature'), [
-                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                'SUFFIX'       => ' °C',
-                'DIGITS'       => 1,
-            ], 60);
             $this->SetValue('OutdoorTemperature', $s->outdoorTemperature);
         }
-        if (isset($s->indoorHumidity)) {
-            $this->setSafeValue('IndoorHumidity', $s->indoorHumidity);
+        if ($s->humidity !== null) {
+            $this->setSafeValue('IndoorHumidity', $s->humidity);
         }
     }
 
@@ -944,13 +966,13 @@ class MideaAir extends IPSModule
     private function handleDehumidifierAction(string $ident, $value): void
     {
         $state = [
-            'running'       => $this->getSafeValue('Running',       false),
-            'mode'          => $this->getSafeValue('Mode',          1),
-            'fanSpeed'      => $this->getSafeValue('FanSpeed',      0x32),
-            'targetHumidity'=> $this->getSafeValue('TargetHumidity',60),
-            'ionMode'       => $this->getSafeValue('IonMode',       false),
-            'pump'          => $this->getSafeValue('Pump',          false),
-            'sleepSwitch'   => $this->getSafeValue('SleepMode',     false),
+            'running'       => $this->getSafeValue('Running', false),
+            'mode'          => $this->getSafeValue('Mode', 1),
+            'fanSpeed'      => $this->getSafeValue('FanSpeed', 0x32),
+            'targetHumidity'=> $this->getSafeValue('TargetHumidity', 60),
+            'ionMode'       => $this->getSafeValue('IonMode', false),
+            'pump'          => $this->getSafeValue('Pump', false),
+            'sleepSwitch'   => $this->getSafeValue('SleepMode', false),
             'verticalSwing' => $this->getSafeValue('VerticalSwing', false),
         ];
 
@@ -970,7 +992,7 @@ class MideaAir extends IPSModule
             $state[$mapping[$ident]] = $value;
         }
 
-        $cmd     = MideaCommands::dehumidifierSetCommand($state);
+        $cmd = MideaCommands::dehumidifierSetCommand($state);
         $payload = $this->sendCommand($cmd);
         if ($payload !== null) {
             $this->applyDehumidifierState(new DehumidifierResponse($payload));
@@ -983,18 +1005,18 @@ class MideaAir extends IPSModule
     private function handleAirConditionerAction(string $ident, $value): void
     {
         $state = [
-            'running'         => $this->getSafeValue('Running',          false),
-            'mode'            => $this->getSafeValue('Mode',             2), // 2=Kühlen (1-basiert)
-            'temperature'     => $this->getSafeValue('TargetTemperature',22.0),
-            'fanSpeed'        => $this->getSafeValue('FanSpeed',         102),
-            'verticalSwing'   => $this->getSafeValue('VerticalSwing',    0) > 0,
-            'horizontalSwing' => $this->getSafeValue('HorizontalSwing',  0) > 0,
-            'ecoMode'         => $this->getSafeValue('EcoMode',          false),
-            'turbo'           => $this->getSafeValue('Turbo',            false),
-            'purifier'        => $this->getSafeValue('Purifier',         false),
-            'dryer'           => $this->getSafeValue('Dryer',            false),
-            'frostProtect'    => $this->getSafeValue('FrostProtect',     false),
-            'comfortMode'     => $this->getSafeValue('ComfortMode',      false),
+            'running'         => $this->getSafeValue('Running', false),
+            'mode'            => $this->getSafeValue('Mode', 2), // 2=Kühlen (1-basiert)
+            'temperature'     => $this->getSafeValue('TargetTemperature', 22.0),
+            'fanSpeed'        => $this->getSafeValue('FanSpeed', 102),
+            'verticalSwing'   => $this->getSafeValue('VerticalSwing', 0) > 0,
+            'horizontalSwing' => $this->getSafeValue('HorizontalSwing', 0) > 0,
+            'ecoMode'         => $this->getSafeValue('EcoMode', false),
+            'turbo'           => $this->getSafeValue('Turbo', false),
+            'purifier'        => $this->getSafeValue('Purifier', false),
+            'dryer'           => $this->getSafeValue('Dryer', false),
+            'frostProtect'    => $this->getSafeValue('FrostProtect', false),
+            'comfortMode'     => $this->getSafeValue('ComfortMode', false),
         ];
 
         $mapping = [
@@ -1014,7 +1036,7 @@ class MideaAir extends IPSModule
             $state[$mapping[$ident]] = $value;
         }
 
-        $cmd     = MideaCommands::airConditionerSetCommand($state);
+        $cmd = MideaCommands::airConditionerSetCommand($state);
         $payload = $this->sendCommand($cmd);
         if ($payload !== null) {
             $this->applyAirConditionerState(new AirConditionerResponse($payload));
@@ -1031,13 +1053,13 @@ class MideaAir extends IPSModule
      */
     private function sendCommand(string $cmdBytes): ?string
     {
-        $ip    = $this->ReadPropertyString('IPAddress');
-        $port  = $this->ReadPropertyInteger('Port');
+        $ip = $this->ReadPropertyString('IPAddress');
+        $port = $this->ReadPropertyInteger('Port');
         $token = $this->ReadPropertyString('Token');
-        $key   = $this->ReadPropertyString('Key');
+        $key = $this->ReadPropertyString('Key');
         $appId = $this->ReadPropertyString('ApplianceID');
 
-        $crypto    = new MideaCrypto();
+        $crypto = new MideaCrypto();
         $lanPacket = $this->buildLanPacket($cmdBytes, $appId, $crypto);
 
         if (!empty($token) && !empty($key)) {
@@ -1059,22 +1081,22 @@ class MideaAir extends IPSModule
         $idBytes = $this->stringToBytes64LE($applianceId);
 
         // Zeitstempel
-        $cs      = (int)($now->format('u') / 10000);  // Centisekunden
-        $second  = (int)$now->format('s');
-        $minute  = (int)$now->format('i');
-        $hour    = (int)$now->format('G');
-        $day     = (int)$now->format('j');
-        $month   = (int)$now->format('n');
-        $year2   = (int)$now->format('y');
-        $century = (int)($now->format('Y') / 100);
+        $cs = (int) ($now->format('u') / 10000);  // Centisekunden
+        $second = (int) $now->format('s');
+        $minute = (int) $now->format('i');
+        $hour = (int) $now->format('G');
+        $day = (int) $now->format('j');
+        $month = (int) $now->format('n');
+        $year2 = (int) $now->format('y');
+        $century = (int) ($now->format('Y') / 100);
 
-        $packet  = chr(0x5A) . chr(0x5A)   // Header
+        $packet = chr(0x5A) . chr(0x5A)   // Header
                  . chr(0x01) . chr(0x11)   // Nachrichtentyp
                  . chr(0x00) . chr(0x00)   // Länge (wird unten gesetzt)
                  . chr(0x20) . chr(0x00)
                  . chr(0x00) . chr(0x00) . chr(0x00) . chr(0x00)  // MessageID
-                 . chr($cs)  . chr($second) . chr($minute) . chr($hour)
-                 . chr($day) . chr($month)  . chr($year2)  . chr($century)
+                 . chr($cs) . chr($second) . chr($minute) . chr($hour)
+                 . chr($day) . chr($month) . chr($year2) . chr($century)
                  . $idBytes
                  . str_repeat("\x00", 12);
 
@@ -1082,9 +1104,9 @@ class MideaAir extends IPSModule
         $packet .= $crypto->aesEncrypt($cmdData);
 
         // Länge setzen (Little-Endian, inkl. 16 Bytes für den MD5-Footer)
-        $totalLen   = strlen($packet) + 16;
-        $packet[4]  = chr($totalLen & 0xFF);
-        $packet[5]  = chr(($totalLen >> 8) & 0xFF);
+        $totalLen = strlen($packet) + 16;
+        $packet[4] = chr($totalLen & 0xFF);
+        $packet[5] = chr(($totalLen >> 8) & 0xFF);
 
         // MD5-Fingerabdruck anhängen
         $packet .= $crypto->md5fingerprint($packet);
@@ -1097,7 +1119,7 @@ class MideaAir extends IPSModule
     {
         $socket = @fsockopen($ip, $port, $errno, $errstr, self::SOCKET_TIMEOUT);
         if ($socket === false) {
-            $this->SendDebug("sendV3", "Verbindung fehlgeschlagen $ip:$port – $errstr ($errno)", 0);
+            $this->SendDebug('sendV3', "Verbindung fehlgeschlagen $ip:$port – $errstr ($errno)", 0);
             return null;
         }
 
@@ -1105,14 +1127,14 @@ class MideaAir extends IPSModule
             stream_set_timeout($socket, self::SOCKET_TIMEOUT);
 
             // Handshake: Token als 8370-Paket senden
-            $byteToken  = hex2bin($token);
-            $byteKey    = hex2bin($key);
-            $handshake  = $crypto->encode8370($byteToken, MideaCrypto::MSGTYPE_HANDSHAKE_REQUEST);
+            $byteToken = hex2bin($token);
+            $byteKey = hex2bin($key);
+            $handshake = $crypto->encode8370($byteToken, MideaCrypto::MSGTYPE_HANDSHAKE_REQUEST);
             fwrite($socket, $handshake);
 
             $hsResp = $this->readSocket($socket, 1024);
             if ($hsResp === null || strlen($hsResp) < 72) {
-                $this->SendDebug("sendV3", "Handshake-Antwort fehlt oder zu kurz", 0);
+                $this->SendDebug('sendV3', 'Handshake-Antwort fehlt oder zu kurz', 0);
                 return null;
             }
 
@@ -1123,19 +1145,19 @@ class MideaAir extends IPSModule
             usleep(500000);
 
             // Eigentliche Anfrage senden
-            $encoded  = $crypto->encode8370($lanPacket, MideaCrypto::MSGTYPE_ENCRYPTED_REQUEST);
+            $encoded = $crypto->encode8370($lanPacket, MideaCrypto::MSGTYPE_ENCRYPTED_REQUEST);
             fwrite($socket, $encoded);
 
-            $respBuf  = $this->readSocket($socket, 2048);
+            $respBuf = $this->readSocket($socket, 2048);
             if ($respBuf === null) {
                 return null;
             }
 
-            [$packets,] = $crypto->decode8370($respBuf);
+            [$packets] = $crypto->decode8370($respBuf);
             return $this->extractPayloadFromPackets($packets, $crypto);
 
         } catch (Exception $e) {
-            $this->SendDebug("sendV3", "Fehler: " . $e->getMessage(), 0);
+            $this->SendDebug('sendV3', 'Fehler: ' . $e->getMessage(), 0);
             return null;
         } finally {
             fclose($socket);
@@ -1147,7 +1169,7 @@ class MideaAir extends IPSModule
     {
         $socket = @fsockopen($ip, $port, $errno, $errstr, self::SOCKET_TIMEOUT);
         if ($socket === false) {
-            $this->SendDebug("sendV2", "Verbindung fehlgeschlagen $ip:$port – $errstr ($errno)", 0);
+            $this->SendDebug('sendV2', "Verbindung fehlgeschlagen $ip:$port – $errstr ($errno)", 0);
             return null;
         }
 
@@ -1163,13 +1185,13 @@ class MideaAir extends IPSModule
             // ZZ-Pakete (0x5A5A Header)
             if (strlen($resp) > 5 && substr($resp, 0, 2) === MideaCrypto::HDR_ZZ) {
                 $packets = [];
-                $offset  = 0;
+                $offset = 0;
                 while ($offset < strlen($resp)) {
                     $size = ord($resp[$offset + 4]);  // Low-Byte der Paketlänge
                     if ($size < 40 || $offset + $size > strlen($resp)) {
                         break;
                     }
-                    $chunk     = substr($resp, $offset, $size);
+                    $chunk = substr($resp, $offset, $size);
                     $encrypted = substr($chunk, 40, $size - 40 - 16);
                     if (strlen($encrypted) > 0) {
                         $packets[] = $crypto->aesDecrypt($encrypted);
@@ -1180,7 +1202,7 @@ class MideaAir extends IPSModule
             }
 
         } catch (Exception $e) {
-            $this->SendDebug("sendV2", "Fehler: " . $e->getMessage(), 0);
+            $this->SendDebug('sendV2', 'Fehler: ' . $e->getMessage(), 0);
         } finally {
             fclose($socket);
         }
@@ -1199,7 +1221,7 @@ class MideaAir extends IPSModule
                 $encrypted = substr($packet, 40, strlen($packet) - 56);
                 try {
                     $decrypted = $crypto->aesDecrypt($encrypted);
-                    $payload   = $this->stripCommandHeader($decrypted);
+                    $payload = $this->stripCommandHeader($decrypted);
                     if ($payload !== null) {
                         return $payload;
                     }
@@ -1255,7 +1277,7 @@ class MideaAir extends IPSModule
      */
     private function readSocket($socket, int $maxBytes): ?string
     {
-        $data    = '';
+        $data = '';
         $timeout = microtime(true) + self::SOCKET_TIMEOUT;
 
         while (microtime(true) < $timeout) {
@@ -1358,11 +1380,11 @@ class MideaAir extends IPSModule
      */
     private function testTokenConnection(string $ip, int $port, string $token, string $key): bool
     {
-        $this->SendDebug("Token", "Teste Verbindung zu $ip:$port...", 0);
+        $this->SendDebug('Token', "Teste Verbindung zu $ip:$port...", 0);
 
         $socket = @fsockopen($ip, $port, $errno, $errstr, self::SOCKET_TIMEOUT);
         if ($socket === false) {
-            $this->SendDebug("Token", "✗ Verbindung fehlgeschlagen: $errstr ($errno)", 0);
+            $this->SendDebug('Token', "✗ Verbindung fehlgeschlagen: $errstr ($errno)", 0);
             return false;
         }
 
@@ -1371,7 +1393,7 @@ class MideaAir extends IPSModule
 
             $crypto = new MideaCrypto('', '');
             $byteToken = hex2bin($token);
-            $byteKey   = hex2bin($key);
+            $byteKey = hex2bin($key);
 
             // V3 Handshake senden
             $handshake = $crypto->encode8370($byteToken, MideaCrypto::MSGTYPE_HANDSHAKE_REQUEST);
@@ -1380,15 +1402,15 @@ class MideaAir extends IPSModule
             // Antwort lesen
             $hsResp = $this->readSocket($socket, 1024);
             if ($hsResp === null || strlen($hsResp) < 72) {
-                $this->SendDebug("Token", "✗ Handshake-Antwort fehlt (Token ungültig)", 0);
+                $this->SendDebug('Token', '✗ Handshake-Antwort fehlt (Token ungültig)', 0);
                 return false;
             }
 
-            $this->SendDebug("Token", "✓ Handshake erfolgreich! Token ist gültig.", 0);
+            $this->SendDebug('Token', '✓ Handshake erfolgreich! Token ist gültig.', 0);
             return true;
 
         } catch (Exception $e) {
-            $this->SendDebug("Token", "✗ Fehler: " . $e->getMessage(), 0);
+            $this->SendDebug('Token', '✗ Fehler: ' . $e->getMessage(), 0);
             return false;
         } finally {
             fclose($socket);

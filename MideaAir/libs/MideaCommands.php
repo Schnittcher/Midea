@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -8,38 +9,9 @@ declare(strict_types=1);
  * Byte-Offsets nach dem 10-Byte-Befehlsheader (nach 0xAA, Länge, Typ, ...):
  * data[0]=0x41/0x48, data[1]=Flags, data[2]=Mode, data[3]=FanSpeed, ...
  */
-
 class MideaCommands
 {
     private static int $sequence = 0;
-
-    private static function nextSequence(): int
-    {
-        self::$sequence = (self::$sequence + 1) & 0xFF;
-        return self::$sequence;
-    }
-
-    /**
-     * Fügt Sequenznummer, CRC8 und Prüfsumme ein und gibt fertige Befehlsbytes zurück.
-     * sequenceIdx = -1 bedeutet kein Sequenzbyte (für MideaCommand ohne Sequenz).
-     */
-    private static function finalize(string $data, int $sequenceIdx = -1): string
-    {
-        $len = strlen($data);
-        if ($sequenceIdx >= 0 && $sequenceIdx < $len) {
-            $data[$sequenceIdx] = chr(self::nextSequence());
-        }
-        // CRC8 über Bytes [10 .. len-3] (= data[10:-2])
-        $crc = MideaCrypto::crc8(substr($data, 10, $len - 12));
-        $data[$len - 2] = chr($crc);
-        // Prüfsumme = (~sum(data[1:-1]) + 1) & 0xFF
-        $sum = 0;
-        for ($i = 1; $i < $len - 1; $i++) {
-            $sum += ord($data[$i]);
-        }
-        $data[$len - 1] = chr((~$sum + 1) & 0xFF);
-        return $data;
-    }
 
     // ── Entfeuchter (0xA1) ────────────────────────────────────────────────
 
@@ -88,29 +60,43 @@ class MideaCommands
         $d = str_split($data);
 
         $flags = 0;
-        if (!empty($state['running']))    { $flags |= 0x01; }
-        if (!empty($state['beepPrompt'])) { $flags |= 0x40; }
+        if (!empty($state['running'])) {
+            $flags |= 0x01;
+        }
+        if (!empty($state['beepPrompt'])) {
+            $flags |= 0x40;
+        }
         $d[11] = chr($flags);
 
-        $d[12] = chr(isset($state['mode']) ? ((int)$state['mode'] & 0x0F) : 0x01);
-        $d[13] = chr(isset($state['fanSpeed']) ? ((int)$state['fanSpeed'] & 0x7F) : 0x32);
+        $d[12] = chr(isset($state['mode']) ? ((int) $state['mode'] & 0x0F) : 0x01);
+        $d[13] = chr(isset($state['fanSpeed']) ? ((int) $state['fanSpeed'] & 0x7F) : 0x32);
 
-        $hum = isset($state['targetHumidity']) ? min(100, max(0, (int)$state['targetHumidity'])) : 60;
+        $hum = isset($state['targetHumidity']) ? min(100, max(0, (int) $state['targetHumidity'])) : 60;
         $d[17] = chr($hum & 0x7F);
 
         $ctrl = 0;
-        if (!empty($state['ionMode']))        { $ctrl |= 0x40; }
-        if (!empty($state['sleepSwitch']))    { $ctrl |= 0x20; }
-        if (!empty($state['pumpSwitchFlag'])) { $ctrl |= 0x10; }
-        if (!empty($state['pump']))           { $ctrl |= 0x08; }
+        if (!empty($state['ionMode'])) {
+            $ctrl |= 0x40;
+        }
+        if (!empty($state['sleepSwitch'])) {
+            $ctrl |= 0x20;
+        }
+        if (!empty($state['pumpSwitchFlag'])) {
+            $ctrl |= 0x10;
+        }
+        if (!empty($state['pump'])) {
+            $ctrl |= 0x08;
+        }
         $d[19] = chr($ctrl);
 
         $swing = 0;
-        if (!empty($state['verticalSwing'])) { $swing |= 0x20; }
+        if (!empty($state['verticalSwing'])) {
+            $swing |= 0x20;
+        }
         $d[20] = chr($swing);
 
         if (isset($state['tankWarningLevel'])) {
-            $d[23] = chr((int)$state['tankWarningLevel'] & 0xFF);
+            $d[23] = chr((int) $state['tankWarningLevel'] & 0xFF);
         }
 
         return self::finalize(implode('', $d), 30);
@@ -166,45 +152,69 @@ class MideaCommands
 
         // [11] Flags
         $flags = 0;
-        if (!empty($state['running']))    { $flags |= 0x01; }
-        if (!empty($state['beepPrompt'])) { $flags |= 0x40; }
+        if (!empty($state['running'])) {
+            $flags |= 0x01;
+        }
+        if (!empty($state['beepPrompt'])) {
+            $flags |= 0x40;
+        }
         $d[11] = chr($flags);
 
         // [12] Mode + Temperatur
-        $mode = isset($state['mode']) ? ((int)$state['mode'] & 0x07) : 0;
-        $temp = isset($state['temperature']) ? (float)$state['temperature'] : 22.0;
+        $mode = isset($state['mode']) ? ((int) $state['mode'] & 0x07) : 0;
+        $temp = isset($state['temperature']) ? (float) $state['temperature'] : 22.0;
         $temp = max(16.0, min(31.0, $temp));
-        $tempInt = (int)$temp;
+        $tempInt = (int) $temp;
         $tempDec = ($temp - $tempInt >= 0.5) ? 1 : 0;
         $d[12] = chr(($mode << 5) | ($tempDec << 4) | (($tempInt - 16) & 0x0F));
 
         // [13] FanSpeed
-        $d[13] = chr(isset($state['fanSpeed']) ? ((int)$state['fanSpeed'] & 0x7F) : 102);
+        $d[13] = chr(isset($state['fanSpeed']) ? ((int) $state['fanSpeed'] & 0x7F) : 102);
 
         // [17] Swing
         $swing = 0;
-        if (!empty($state['verticalSwing']))   { $swing |= 0x3C; }
-        if (!empty($state['horizontalSwing'])) { $swing |= 0x03; }
+        if (!empty($state['verticalSwing'])) {
+            $swing |= 0x3C;
+        }
+        if (!empty($state['horizontalSwing'])) {
+            $swing |= 0x03;
+        }
         $d[17] = chr($swing);
 
         // [18] TurboFan, ComfortSleep-Wert
         $b18 = 0;
-        if (!empty($state['turboFan']))     { $b18 |= 0x20; }
-        if (!empty($state['comfortSleep'])) { $b18 |= 0x03; }
+        if (!empty($state['turboFan'])) {
+            $b18 |= 0x20;
+        }
+        if (!empty($state['comfortSleep'])) {
+            $b18 |= 0x03;
+        }
         $d[18] = chr($b18);
 
         // [19] Eco, Purifier, Dryer
         $b19 = 0;
-        if (!empty($state['ecoMode']))  { $b19 |= 0x80; }
-        if (!empty($state['purifier'])) { $b19 |= 0x20; }
-        if (!empty($state['dryer']))    { $b19 |= 0x04; }
+        if (!empty($state['ecoMode'])) {
+            $b19 |= 0x80;
+        }
+        if (!empty($state['purifier'])) {
+            $b19 |= 0x20;
+        }
+        if (!empty($state['dryer'])) {
+            $b19 |= 0x04;
+        }
         $d[19] = chr($b19);
 
         // [20] Fahrenheit, Turbo, ComfortSleep
         $b20 = 0;
-        if (!empty($state['fahrenheit']))   { $b20 |= 0x04; }
-        if (!empty($state['turbo']))        { $b20 |= 0x02; }
-        if (!empty($state['comfortSleep'])) { $b20 |= 0x80; }
+        if (!empty($state['fahrenheit'])) {
+            $b20 |= 0x04;
+        }
+        if (!empty($state['turbo'])) {
+            $b20 |= 0x02;
+        }
+        if (!empty($state['comfortSleep'])) {
+            $b20 |= 0x80;
+        }
         $d[20] = chr($b20);
 
         // [31] FrostProtect
@@ -238,6 +248,34 @@ class MideaCommands
               . "\xB5\x01\x00\x00\x00";
         return self::finalize($data);
     }
+
+    private static function nextSequence(): int
+    {
+        self::$sequence = (self::$sequence + 1) & 0xFF;
+        return self::$sequence;
+    }
+
+    /**
+     * Fügt Sequenznummer, CRC8 und Prüfsumme ein und gibt fertige Befehlsbytes zurück.
+     * sequenceIdx = -1 bedeutet kein Sequenzbyte (für MideaCommand ohne Sequenz).
+     */
+    private static function finalize(string $data, int $sequenceIdx = -1): string
+    {
+        $len = strlen($data);
+        if ($sequenceIdx >= 0 && $sequenceIdx < $len) {
+            $data[$sequenceIdx] = chr(self::nextSequence());
+        }
+        // CRC8 über Bytes [10 .. len-3] (= data[10:-2])
+        $crc = MideaCrypto::crc8(substr($data, 10, $len - 12));
+        $data[$len - 2] = chr($crc);
+        // Prüfsumme = (~sum(data[1:-1]) + 1) & 0xFF
+        $sum = 0;
+        for ($i = 1; $i < $len - 1; $i++) {
+            $sum += ord($data[$i]);
+        }
+        $data[$len - 1] = chr((~$sum + 1) & 0xFF);
+        return $data;
+    }
 }
 
 // ── Antwort-Parser ────────────────────────────────────────────────────────────
@@ -248,71 +286,71 @@ class MideaCommands
  */
 class DehumidifierResponse
 {
-    public bool  $fault;
-    public bool  $runStatus;
-    public bool  $iMode;
-    public bool  $timingMode;
-    public int   $mode;
-    public int   $modeFc;
-    public int   $fanSpeed;
-    public bool  $onTimerSet;
-    public int   $onTimerHour;
-    public int   $onTimerMinutes;
-    public bool  $offTimerSet;
-    public int   $offTimerHour;
-    public int   $offTimerMinutes;
+    public bool $fault;
+    public bool $runStatus;
+    public bool $iMode;
+    public bool $timingMode;
+    public int $mode;
+    public int $modeFc;
+    public int $fanSpeed;
+    public bool $onTimerSet;
+    public int $onTimerHour;
+    public int $onTimerMinutes;
+    public bool $offTimerSet;
+    public int $offTimerHour;
+    public int $offTimerMinutes;
     public float $targetHumidity;
-    public bool  $filterIndicator;
-    public bool  $ionMode;
-    public bool  $sleepSwitch;
-    public bool  $pumpSwitchFlag;
-    public bool  $pumpSwitch;
-    public bool  $defrosting;
-    public int   $tankLevel;
-    public bool  $tankFull;
+    public bool $filterIndicator;
+    public bool $ionMode;
+    public bool $sleepSwitch;
+    public bool $pumpSwitchFlag;
+    public bool $pumpSwitch;
+    public bool $defrosting;
+    public int $tankLevel;
+    public bool $tankFull;
     public float $currentHumidity;
     public float $indoorTemperature;
-    public bool  $verticalSwing;
-    public bool  $horizontalSwing;
-    public int   $errCode;
-    public int   $dustTime;
-    public int   $pm25;
+    public bool $verticalSwing;
+    public bool $horizontalSwing;
+    public int $errCode;
+    public int $dustTime;
+    public int $pm25;
 
     public function __construct(string $data)
     {
         $b = array_values(unpack('C*', $data));
 
-        $this->fault        = ($b[1] & 0x80) !== 0;
-        $this->runStatus    = ($b[1] & 0x01) !== 0;
-        $this->iMode        = ($b[1] & 0x04) !== 0;
-        $this->timingMode   = ($b[1] & 0x10) !== 0;
-        $this->mode         = $b[2] & 0x0F;
-        $this->modeFc       = ($b[2] & 0xF0) >> 4;
-        $this->fanSpeed     = $b[3] & 0x7F;
+        $this->fault = ($b[1] & 0x80) !== 0;
+        $this->runStatus = ($b[1] & 0x01) !== 0;
+        $this->iMode = ($b[1] & 0x04) !== 0;
+        $this->timingMode = ($b[1] & 0x10) !== 0;
+        $this->mode = $b[2] & 0x0F;
+        $this->modeFc = ($b[2] & 0xF0) >> 4;
+        $this->fanSpeed = $b[3] & 0x7F;
 
-        $this->onTimerSet     = ($b[4] & 0x80) !== 0;
-        $this->onTimerHour    = ($b[4] & 0x7C) >> 2;
+        $this->onTimerSet = ($b[4] & 0x80) !== 0;
+        $this->onTimerHour = ($b[4] & 0x7C) >> 2;
         $this->onTimerMinutes = ($b[4] & 0x03) * 15 + (($b[6] & 0xF0) >> 4);
-        $this->offTimerSet    = ($b[5] & 0x80) !== 0;
-        $this->offTimerHour   = ($b[5] & 0x7C) >> 2;
+        $this->offTimerSet = ($b[5] & 0x80) !== 0;
+        $this->offTimerHour = ($b[5] & 0x7C) >> 2;
         $this->offTimerMinutes = ($b[5] & 0x03) * 15 + ($b[6] & 0x0F);
 
-        $this->targetHumidity = min(100.0, (float)$b[7]) + ($b[8] & 0x0F) * 0.0625;
+        $this->targetHumidity = min(100.0, (float) $b[7]) + ($b[8] & 0x0F) * 0.0625;
 
         $this->filterIndicator = ($b[9] & 0x80) !== 0;
-        $this->ionMode         = ($b[9] & 0x40) !== 0;
-        $this->sleepSwitch     = ($b[9] & 0x20) !== 0;
-        $this->pumpSwitchFlag  = ($b[9] & 0x10) !== 0;
-        $this->pumpSwitch      = ($b[9] & 0x08) !== 0;
+        $this->ionMode = ($b[9] & 0x40) !== 0;
+        $this->sleepSwitch = ($b[9] & 0x20) !== 0;
+        $this->pumpSwitchFlag = ($b[9] & 0x10) !== 0;
+        $this->pumpSwitch = ($b[9] & 0x08) !== 0;
 
         $this->defrosting = ($b[10] & 0x80) !== 0;
-        $this->tankLevel  = $b[10] & 0x7F;
-        $this->tankFull   = $this->tankLevel >= 100;
+        $this->tankLevel = $b[10] & 0x7F;
+        $this->tankFull = $this->tankLevel >= 100;
 
         $this->dustTime = ($b[11] ?? 0) * 2;
-        $this->pm25     = ($b[13] ?? 0) + (($b[14] ?? 0) * 256);
+        $this->pm25 = ($b[13] ?? 0) + (($b[14] ?? 0) * 256);
 
-        $this->currentHumidity = (float)($b[16] ?? 0);
+        $this->currentHumidity = (float) ($b[16] ?? 0);
 
         $rawTemp = $b[17] ?? 128;
         $this->indoorTemperature = ($rawTemp - 50) / 2.0;
@@ -320,9 +358,9 @@ class DehumidifierResponse
         $tempDec = (($b[18] ?? 0) & 0x0F) * 0.1;
         $this->indoorTemperature += ($this->indoorTemperature >= 0) ? $tempDec : -$tempDec;
 
-        $this->verticalSwing   = isset($b[19]) && ($b[19] & 0x20) !== 0;
+        $this->verticalSwing = isset($b[19]) && ($b[19] & 0x20) !== 0;
         $this->horizontalSwing = isset($b[19]) && ($b[19] & 0x10) !== 0;
-        $this->errCode         = $b[21] ?? 0;
+        $this->errCode = $b[21] ?? 0;
     }
 }
 
@@ -331,55 +369,55 @@ class DehumidifierResponse
  */
 class AirConditionerResponse
 {
-    public bool   $runStatus;
-    public bool   $iMode;
-    public bool   $timingMode;
-    public bool   $applianceError;
-    public int    $mode;
-    public float  $targetTemperature;
-    public int    $fanSpeed;
-    public int    $verticalSwing;
-    public int    $horizontalSwing;
-    public bool   $turboFan;
-    public bool   $comfortSleep;
-    public bool   $eco;
-    public bool   $purifier;
-    public bool   $dryer;
-    public bool   $turbo;
-    public bool   $fahrenheit;
-    public bool   $showScreen;
+    public bool $runStatus;
+    public bool $iMode;
+    public bool $timingMode;
+    public bool $applianceError;
+    public int $mode;
+    public float $targetTemperature;
+    public int $fanSpeed;
+    public int $verticalSwing;
+    public int $horizontalSwing;
+    public bool $turboFan;
+    public bool $comfortSleep;
+    public bool $eco;
+    public bool $purifier;
+    public bool $dryer;
+    public bool $turbo;
+    public bool $fahrenheit;
+    public bool $showScreen;
     public ?float $indoorTemperature;
     public ?float $outdoorTemperature;
-    public int    $errCode;
-    public ?int   $humidity;
-    public bool   $frostProtect;
-    public bool   $comfortMode;
+    public int $errCode;
+    public ?int $humidity;
+    public bool $frostProtect;
+    public bool $comfortMode;
 
     public function __construct(string $data)
     {
         $b = array_values(unpack('C*', $data));
 
-        $this->runStatus      = ($b[1] & 0x01) !== 0;
-        $this->iMode          = ($b[1] & 0x04) !== 0;
-        $this->timingMode     = ($b[1] & 0x10) !== 0;
+        $this->runStatus = ($b[1] & 0x01) !== 0;
+        $this->iMode = ($b[1] & 0x04) !== 0;
+        $this->timingMode = ($b[1] & 0x10) !== 0;
         $this->applianceError = ($b[1] & 0x80) !== 0;
 
-        $this->mode              = ($b[2] & 0xE0) >> 5;
+        $this->mode = ($b[2] & 0xE0) >> 5;
         $this->targetTemperature = ($b[2] & 0x0F) + 16.0 + (($b[2] & 0x10) ? 0.5 : 0.0);
-        $this->fanSpeed          = $b[3] & 0x7F;
+        $this->fanSpeed = $b[3] & 0x7F;
 
-        $this->verticalSwing   = ($b[7] & 0x0C) >> 2;
+        $this->verticalSwing = ($b[7] & 0x0C) >> 2;
         $this->horizontalSwing = $b[7] & 0x03;
 
-        $this->turboFan     = ($b[8] & 0x20) !== 0;
+        $this->turboFan = ($b[8] & 0x20) !== 0;
         $this->comfortSleep = ($b[9] & 0x40) !== 0;
-        $this->eco          = ($b[9] & 0x10) !== 0;
-        $this->purifier     = ($b[9] & 0x20) !== 0;
-        $this->dryer        = ($b[9] & 0x04) !== 0;
-        $this->turbo        = ($b[10] & 0x02) !== 0;
-        $this->fahrenheit   = ($b[10] & 0x04) !== 0;
+        $this->eco = ($b[9] & 0x10) !== 0;
+        $this->purifier = ($b[9] & 0x20) !== 0;
+        $this->dryer = ($b[9] & 0x04) !== 0;
+        $this->turbo = ($b[10] & 0x02) !== 0;
+        $this->fahrenheit = ($b[10] & 0x04) !== 0;
 
-        $screenBits       = isset($b[14]) ? (($b[14] >> 4) & 0x07) : 7;
+        $screenBits = isset($b[14]) ? (($b[14] >> 4) & 0x07) : 7;
         $this->showScreen = ($screenBits !== 7) && $this->runStatus;
 
         if (isset($b[11]) && $b[11] !== 0 && $b[11] !== 0xFF) {
@@ -398,7 +436,7 @@ class AirConditionerResponse
             $this->outdoorTemperature = null;
         }
 
-        $this->errCode  = $b[16] ?? 0;
+        $this->errCode = $b[16] ?? 0;
         $this->humidity = isset($b[19]) ? $b[19] : null;
 
         if (isset($b[21])) {
@@ -433,16 +471,16 @@ class AirConditionerElectricityResponse
 
     public function __construct(string $data)
     {
-        $b    = array_values(unpack('C*', $data));
+        $b = array_values(unpack('C*', $data));
         $type = $b[0] ?? 0;
 
         if ($type === 0xC1) {
             // 24-Bit Big-Endian, Einheit 0,1 W
-            $raw         = (($b[7] ?? 0) << 16) | (($b[8] ?? 0) << 8) | ($b[9] ?? 0);
+            $raw = (($b[7] ?? 0) << 16) | (($b[8] ?? 0) << 8) | ($b[9] ?? 0);
             $this->power = $raw / 10.0;
         } elseif ($type === 0xB5) {
             // 16-Bit Big-Endian an b[19..20], Einheit 0,01 W
-            $raw         = (($b[19] ?? 0) << 8) | ($b[20] ?? 0);
+            $raw = (($b[19] ?? 0) << 8) | ($b[20] ?? 0);
             $this->power = $raw / 100.0;
         } else {
             // 0xA0 und andere: b[7]*10 + b[8] + b[9]/10

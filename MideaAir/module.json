@@ -6,7 +6,9 @@
     "vendor": "Midea",
     "prefix": "MA",
     "url": "",
-    "aliases": ["Midea Air"],
+    "aliases": [
+        "Midea Air"
+    ],
     "parentRequirements": [],
     "childRequirements": [],
     "implemented": []

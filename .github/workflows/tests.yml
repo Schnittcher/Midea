@@ -1,0 +1,9 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    uses: Schnittcher/Symcon_CI/.github/workflows/tests.yml@v1
