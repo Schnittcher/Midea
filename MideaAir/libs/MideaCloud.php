@@ -160,12 +160,18 @@ class MideaCloud
             if (!empty($item['sn']) && $this->dataKey !== '') {
                 $sn = $this->crypto->decryptDataString($item['sn'], $this->dataKey);
             }
+            // EU-Server liefern token/key direkt im Listeneintrag
+            $this->log('listAppliances() Gerät: id=' . ($item['id'] ?? '') .
+                ' token=' . (empty($item['token']) ? '(leer)' : '(vorhanden)') .
+                ' key=' . (empty($item['key']) ? '(leer)' : '(vorhanden)'));
             $appliances[] = [
                 'id'    => (string) ($item['id'] ?? ''),
                 'name'  => (string) ($item['name'] ?? ''),
                 'sn'    => $sn,
                 'type'  => (string) ($item['type'] ?? ''),
                 'model' => (string) ($item['modelNumber'] ?? ''),
+                'token' => (string) ($item['token'] ?? ''),
+                'key'   => (string) ($item['key'] ?? ''),
             ];
         }
         return $appliances;

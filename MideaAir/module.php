@@ -232,6 +232,9 @@ class MideaAir extends IPSModuleStrict
             return 'Fehler: ApplianceID erforderlich';
         }
 
+        $ip = $this->ReadPropertyString('IPAddress');
+        $port = $this->ReadPropertyInteger('Port');
+
         try {
             $this->SendDebug('Token', '=== START ===', 0);
 
@@ -247,7 +250,28 @@ class MideaAir extends IPSModuleStrict
             $cloud->authenticate();
             $this->SendDebug('Token', '✓ Authentifizierung erfolgreich', 0);
 
-            // Versuche beide UDP-IDs
+            // Stufe 1: Token direkt aus Geräteliste (EU-Server liefern token/key oft inline)
+            $this->SendDebug('Token', 'Stufe 1: Prüfe Geräteliste auf Token/Key...', 0);
+            $appliances = $cloud->listAppliances();
+            foreach ($appliances as $device) {
+                if ($device['id'] === $applianceId && !empty($device['token']) && !empty($device['key'])) {
+                    $this->SendDebug('Token', '✓ Token in Geräteliste gefunden, teste Verbindung...', 0);
+                    if ($this->testTokenConnection($ip, $port, $device['token'], $device['key'])) {
+                        $this->SendDebug('Token', '✓ TOKEN FUNKTIONIERT!', 0);
+                        IPS_SetProperty($this->InstanceID, 'Token', $device['token']);
+                        IPS_SetProperty($this->InstanceID, 'Key', $device['key']);
+                        IPS_ApplyChanges($this->InstanceID);
+                        $this->SendDebug('Token', '=== ERFOLG (Geräteliste) ===', 0);
+                        $capsResult = $this->DetectCapabilities();
+                        return "✓ Token (aus Geräteliste) ermittelt, getestet und gespeichert!\n\n" . $capsResult;
+                    }
+                    $this->SendDebug('Token', '✗ Token aus Liste funktioniert nicht, weiter mit UDP-ID...', 0);
+                    break;
+                }
+            }
+            $this->SendDebug('Token', 'Stufe 2: Versuche UDP-IDs...', 0);
+
+            // Stufe 2: UDP-ID-basierte Token-Ermittlung (Asia-Server)
             $appId = (int) $applianceId;
 
             $this->SendDebug('Token', "Berechne UDP-IDs für ApplianceID: $applianceId", 0);
@@ -281,12 +305,6 @@ class MideaAir extends IPSModuleStrict
             }
             $beUdpId = bin2hex($beResult);
             $this->SendDebug('Token', "BE UDP-ID: $beUdpId", 0);
-
-            // Wie Python: Token holen UND sofort mit Gerät testen!
-            $this->SendDebug('Token', 'Versuche Token zu ermitteln (und direkt testen)...', 0);
-
-            $ip = $this->ReadPropertyString('IPAddress');
-            $port = $this->ReadPropertyInteger('Port');
 
             foreach (['LE' => $leUdpId, 'BE' => $beUdpId] as $name => $udpId) {
                 $this->SendDebug('Token', "[$name] Versuche UDP-ID: $udpId", 0);
