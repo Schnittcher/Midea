@@ -342,6 +342,71 @@ class MideaAir extends IPSModuleStrict
                 }
             }
 
+            // Stufe 3: Asia-Server-Fallback für EU-Apps (midea-local nutzt ausschließlich Asia-Server)
+            $asiaFallback = [
+                'NetHome Plus (EU)' => 'NetHome Plus',
+                'Midea Air (EU)'    => 'Midea Air',
+            ];
+            if (isset($asiaFallback[$appName])) {
+                $asiaApp = $asiaFallback[$appName];
+                $this->SendDebug('Token', "Stufe 3: EU-Server unterstützt getToken nicht, versuche Asia-Server ($asiaApp)...", 0);
+
+                $cloudAsia = new MideaCloud($account, $password, $asiaApp);
+                $cloudAsia->setLogger(function ($msg, $level)
+                {
+                    $this->SendDebug('Cloud', $msg, 0);
+                });
+                $cloudAsia->authenticate();
+                $this->SendDebug('Token', '✓ Asia-Server Authentifizierung erfolgreich', 0);
+
+                // Stufe 3a: Token aus Geräteliste (Asia-Server)
+                $this->SendDebug('Token', 'Stufe 3a: Prüfe Geräteliste auf Token/Key (Asia)...', 0);
+                $appliancesAsia = $cloudAsia->listAppliances();
+                foreach ($appliancesAsia as $device) {
+                    if ($device['id'] === $applianceId && !empty($device['token']) && !empty($device['key'])) {
+                        $this->SendDebug('Token', '✓ Token in Asia-Geräteliste gefunden, teste Verbindung...', 0);
+                        if ($this->testTokenConnection($ip, $port, $device['token'], $device['key'])) {
+                            IPS_SetProperty($this->InstanceID, 'Token', $device['token']);
+                            IPS_SetProperty($this->InstanceID, 'Key', $device['key']);
+                            IPS_ApplyChanges($this->InstanceID);
+                            $this->SendDebug('Token', '=== ERFOLG (Asia-Geräteliste) ===', 0);
+                            $capsResult = $this->DetectCapabilities();
+                            return "✓ Token (Asia-Server, Geräteliste) ermittelt, getestet und gespeichert!\n\n" . $capsResult;
+                        }
+                        $this->SendDebug('Token', '✗ Asia-Token aus Liste funktioniert nicht, weiter mit UDP-ID...', 0);
+                        break;
+                    }
+                }
+
+                // Stufe 3b: UDP-IDs mit Asia-Server
+                $this->SendDebug('Token', 'Stufe 3b: Versuche UDP-IDs mit Asia-Server...', 0);
+                foreach (['LE' => $leUdpId, 'BE' => $beUdpId] as $name => $udpId) {
+                    $this->SendDebug('Token', "[Asia/$name] Versuche UDP-ID: $udpId", 0);
+                    try {
+                        [$token, $key] = $cloudAsia->getToken($udpId);
+
+                        if (empty($token) || empty($key)) {
+                            $this->SendDebug('Token', "[Asia/$name] Kein Token von Asia-Cloud", 0);
+                            continue;
+                        }
+
+                        $this->SendDebug('Token', "[Asia/$name] Token erhalten, teste Verbindung...", 0);
+                        if ($this->testTokenConnection($ip, $port, $token, $key)) {
+                            $this->SendDebug('Token', "[Asia/$name] ✓ TOKEN FUNKTIONIERT!", 0);
+                            IPS_SetProperty($this->InstanceID, 'Token', $token);
+                            IPS_SetProperty($this->InstanceID, 'Key', $key);
+                            IPS_ApplyChanges($this->InstanceID);
+                            $this->SendDebug('Token', '=== ERFOLG (Asia) ===', 0);
+                            $capsResult = $this->DetectCapabilities();
+                            return "✓ Token (Asia-Server, $name) ermittelt, getestet und gespeichert!\n\n" . $capsResult;
+                        }
+                        $this->SendDebug('Token', "[Asia/$name] ✗ Token funktioniert nicht", 0);
+                    } catch (Exception $e) {
+                        $this->SendDebug('Token', "[Asia/$name] ✗ Fehler: " . $e->getMessage(), 0);
+                    }
+                }
+            }
+
             $this->LogMessage('Token-Ermittlung: Kein Token funktioniert mit diesem Gerät', KL_ERROR);
             return '✗ Kein Token funktioniert mit diesem Gerät';
 
