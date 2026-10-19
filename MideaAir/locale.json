@@ -33,6 +33,7 @@
             "Power Measurement available": "Leistungsmessung vorhanden",
             "Auto-detect Token": "Token automatisch ermitteln",
             "Log in with Midea Cloud account to automatically determine Token and Key.": "Mit Midea-Cloud-Account anmelden um Token und Key automatisch zu ermitteln.",
+            "Note: Currently only 'SmartHome (mp-prod.appsmb.com)' is supported. Other options may not work for all accounts.": "Hinweis: Aktuell wird nur 'SmartHome (mp-prod.appsmb.com)' unterstützt. Die anderen Optionen funktionieren möglicherweise nicht für alle Accounts.",
             "Email Address": "E-Mail-Adresse",
             "Password": "Passwort",
             "1. Get Appliance ID": "1. ApplianceID ermitteln",

@@ -1,9 +1,18 @@
 # Changelog
 
+## 19.10.2026 - Version 1.0.1
+
+### Fixes
+
+- README: `SmartHome (mp-prod.appsmb.com)` als Standard-App und empfohlene Option ergänzt
+- SmartHome-Cloud-Authentifizierung vollständig korrigiert: `pushToken` in Login-`iotData` ergänzt (fehlte, behebt Code 3106); `accessToken` aus `mdata.accessToken` (nicht `tokenPwdInfo.tokenPwd`, behebt Code 40002); Login-`iotData` auf msmart-Referenz reduziert (`format`, `language`, `platformId`, `deviceId` entfernt); `deviceId` in `data`-Sektion ergänzt; `format`/`clientType` als Integer; Doppel-Slash-Bug in `reRoute()` behoben (behebt Code 40404)
+
 ## 17.10.2026 - Version 1.0
 
 ### Neu
 
+- SmartHome-Cloud-Unterstützung (`mp-prod.appsmb.com`): Automatischer Fallback als Stufe 4 bei Token-Ermittlung; direkte Auswahl über App-Dropdown möglich
+- App-Option „SmartHome (mp-prod.appsmb.com)" für neuere EU-Accounts
 - EU-Cloud-Server (`mapp-eu.appsmb.com`) für europäische Accounts
 - App-Optionen „NetHome Plus (EU)" und „Midea Air (EU)" in der Konfiguration
 - Stromverbrauchsmessung: Antworttyp 0xB5 (16-Bit Big-Endian an b[19..20], Einheit 0,01 W)
@@ -11,6 +20,7 @@
 
 ### Fixes
 
+- Token-Ermittlung für EU-Accounts: Automatischer Fallback auf Asia-Server (`mapp.appsmb.com`), wenn der EU-Server `getToken` verweigert (Fehler 9999)
 - Klasse erbt von `IPSModuleStrict` statt `IPSModule`
 - `RequestAction` mit korrekten Type Hints (`string $Ident, mixed $Value`)
 - Innenraumfeuchtigkeit nutzt korrekte Property `$humidity` (statt `$indoorHumidity`)

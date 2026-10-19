@@ -204,8 +204,16 @@
                         {
                             "label": "Ariston Clima",
                             "value": "Ariston Clima"
+                        },
+                        {
+                            "label": "SmartHome (mp-prod.appsmb.com)",
+                            "value": "SmartHome"
                         }
                     ]
+                },
+                {
+                    "type": "Label",
+                    "caption": "Note: Currently only 'SmartHome (mp-prod.appsmb.com)' is supported. Other options may not work for all accounts."
                 },
                 {
                     "type": "ValidationTextBox",
