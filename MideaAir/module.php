@@ -805,11 +805,12 @@ class MideaAir extends IPSModuleStrict
         $caps = [];
         $i = 2;
 
-        for ($n = 0; $n < $count && $i + 3 <= strlen($data) - 1; $n++) {
+        for ($n = 0; $n < $count && $i + 3 <= strlen($data); $n++) {
             $key = substr($data, $i, 2);
             $len = ord($data[$i + 2]);
-            $val = ord($data[$i + 3]);
-            if (isset($mapping[$key])) {
+            // Einträge ohne Wert überspringen (wie msmart-ng)
+            if ($len > 0 && $i + 3 < strlen($data) && isset($mapping[$key])) {
+                $val = ord($data[$i + 3]);
                 $name = $mapping[$key];
                 $caps[$name] = $val > 0;
                 // Rohwerte für fan_speed (Stufen) und mode (Zusatzmodi) separat speichern
@@ -818,8 +819,8 @@ class MideaAir extends IPSModuleStrict
                     $this->SendDebug('B5', "$name Rohwert: $val", 0);
                 }
             }
-            // Eintrag = 2 Bytes Schlüssel + 1 Byte Länge + Wert
-            $i += 3 + max($len, 1);
+            // Eintrag = 2 Bytes Schlüssel + 1 Byte Länge + $len Bytes Wert
+            $i += 3 + $len;
         }
 
         return $caps;
