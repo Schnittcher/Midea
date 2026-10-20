@@ -1,5 +1,23 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+
+- Entfeuchter: Panel „Manuelle Konfiguration (Entfeuchter)“ mit Checkboxen für die Modi Smart, Trocknen, Luftreinigung und Schimmelschutz, die Lüfterstufe Mittel sowie Ionisator, Pumpe, Lamellen und Füllstandssensor. „Capabilities ermitteln“ belegt sie aus der B5-Antwort vor, danach lassen sie sich von Hand ändern. Ab Werk ist alles aktiviert.
+
+### Geändert
+
+- Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
+- Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
+- Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
+- Ionisierung, Pumpe, Lamellen und Tankfüllstand gibt es nur noch, wenn die zugehörige Checkbox gesetzt ist. Wird sie abgewählt, auch durch „Capabilities ermitteln“, löscht das Modul die Variable, und ihre Verknüpfungen und Archivzuordnung gehen verloren.
+
+### Fixes
+
+- B5-Antwort: Die Länge jedes Eintrags kommt aus dem Längenbyte statt fest 4 Bytes. Einträge hinter einem längeren Wert (etwa 0x0225 mit 7 Bytes) gingen vorher verloren oder wurden versetzt gelesen. Einträge ohne Wert werden übersprungen.
+- Tests mit PHPUnit und den Symcon-Stubs unter `tests/`: B5-Parser, Entfeuchter-Konfiguration und Soll-Feuchte, an echten Mitschnitten.
+
 ## 19.10.2026 - Version 1.0.1
 
 ### Fixes
