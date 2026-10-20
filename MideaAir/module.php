@@ -86,6 +86,17 @@ class MideaAir extends IPSModuleStrict
         $this->RegisterPropertyBoolean('HasIndoorHumidity', false);
         $this->RegisterPropertyBoolean('HasCurrentPower', false);
 
+        // Manuelle Konfiguration Entfeuchter – standardmäßig alles aktiv, „Capabilities ermitteln“ belegt vor
+        $this->RegisterPropertyBoolean('DehumModeSmart', true);
+        $this->RegisterPropertyBoolean('DehumModeDry', true);
+        $this->RegisterPropertyBoolean('DehumModePurifier', true);
+        $this->RegisterPropertyBoolean('DehumModeAntimould', true);
+        $this->RegisterPropertyBoolean('DehumFanSpeedMedium', true);
+        $this->RegisterPropertyBoolean('DehumHasIonizer', true);
+        $this->RegisterPropertyBoolean('DehumHasPump', true);
+        $this->RegisterPropertyBoolean('DehumHasSwing', true);
+        $this->RegisterPropertyBoolean('DehumHasWaterLevel', true);
+
         // Polling
         $this->RegisterPropertyInteger('UpdateInterval', 60);
 
@@ -609,6 +620,8 @@ class MideaAir extends IPSModuleStrict
             // damit steuern die Checkboxen die Variablen, und der Nutzer kann sie anpassen
             if ($deviceType === self::DEVICE_AIRCON) {
                 $this->applyB5ToProperties($caps);
+            } else {
+                $this->applyB5ToDehumidifierProperties($caps);
             }
 
             // Variablen neu registrieren
@@ -748,6 +761,31 @@ class MideaAir extends IPSModuleStrict
         // B5 liefert dafür keine zuverlässigen Werte, daher rein manuelle Steuerung.
     }
 
+    /**
+     * Belegt die Entfeuchter-Checkboxen aus dem B5-Ergebnis vor (wie homeassistant-midea-air-appliances-lan).
+     * Smart bei 0x1f, Trocknen bei 0x20, Luftreinigung/Schimmelschutz nach dem Wert von 0x14
+     * (1, 2 oder 3 = beide), Mittel fehlt nur bei Lüfter-Wert 3 (Niedrig/Hoch).
+     * Danach steuern die Checkboxen die Variablen und können manuell überschrieben werden.
+     */
+    private function applyB5ToDehumidifierProperties(array $caps): void
+    {
+        $modeCap = (int) ($caps['mode_value'] ?? 0);
+        $properties = [
+            'DehumModeSmart'      => $caps['humidity'] ?? false,
+            'DehumModeDry'        => $caps['dry_clothes'] ?? false,
+            'DehumModePurifier'   => $modeCap === 1 || $modeCap === 3,
+            'DehumModeAntimould'  => $modeCap === 2 || $modeCap === 3,
+            'DehumFanSpeedMedium' => ($caps['fan_speed_value'] ?? 0) !== 3,
+            'DehumHasIonizer'     => $caps['anion'] ?? false,
+            'DehumHasPump'        => $caps['pump'] ?? false,
+            'DehumHasSwing'       => $caps['fan_swing'] ?? false,
+            'DehumHasWaterLevel'  => $caps['water_level'] ?? false,
+        ];
+        foreach ($properties as $property => $value) {
+            IPS_SetProperty($this->InstanceID, $property, (bool) $value);
+        }
+    }
+
     /** Speichert das B5-Ergebnis zusammen mit der Version des Parsers, der es erzeugt hat. */
     private function storeCapabilities(array $caps): void
     {
@@ -839,26 +877,20 @@ class MideaAir extends IPSModuleStrict
 
     private function RegisterDehumidifierVariables(): void
     {
-        $caps = json_decode($this->ReadAttributeString('Capabilities'), true) ?: [];
-        // Ältere Versionen kannten Pumpe, Tankfüllstand, Trocknen und die Zusatzmodi nicht. Ihr Ergebnis
-        // gilt als nicht ermittelt, sonst fehlen Modi und vorhandene Variablen würden gelöscht.
-        $hasCaps = ($caps['_version'] ?? 0) === self::CAPABILITIES_VERSION;
-        if (!$hasCaps && !empty($caps)) {
-            $this->SendDebug('B5', 'Capabilities stammen von einer älteren Version und werden ignoriert, bitte neu ermitteln', 0);
-        }
-
+        // Modi, Lüfterstufen und Zusatzvariablen steuern die Checkboxen. Sie stehen ab Werk auf „vorhanden“,
+        // „Capabilities ermitteln“ belegt sie aus dem B5-Ergebnis vor.
         $this->RegisterVariableBoolean('Running', $this->Translate('Running'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
         ], 10);
 
         $this->RegisterVariableInteger('Mode', $this->Translate('Mode'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
-            'OPTIONS'      => json_encode($this->translateOptions($this->dehumidifierModeOptions($caps, $hasCaps))),
+            'OPTIONS'      => json_encode($this->translateOptions($this->dehumidifierModeOptions())),
         ], 20);
 
         $this->RegisterVariableInteger('FanSpeed', $this->Translate('Fan Speed'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
-            'OPTIONS'      => json_encode($this->translateOptions($this->dehumidifierFanSpeedOptions($caps, $hasCaps))),
+            'OPTIONS'      => json_encode($this->translateOptions($this->dehumidifierFanSpeedOptions())),
         ], 30);
 
         $this->RegisterVariableInteger('TargetHumidity', $this->Translate('Target Humidity'), [
@@ -882,7 +914,7 @@ class MideaAir extends IPSModuleStrict
         ], 60);
 
         $this->registerOptionalVariable(
-            $this->cap($caps, $hasCaps, 'anion'),
+            $this->ReadPropertyBoolean('DehumHasIonizer'),
             'IonMode',
             fn () => $this->RegisterVariableBoolean('IonMode', $this->Translate('Ionization'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
@@ -891,7 +923,7 @@ class MideaAir extends IPSModuleStrict
         );
 
         $this->registerOptionalVariable(
-            $this->cap($caps, $hasCaps, 'pump'),
+            $this->ReadPropertyBoolean('DehumHasPump'),
             'Pump',
             fn () => $this->RegisterVariableBoolean('Pump', $this->Translate('Pump'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
@@ -904,7 +936,7 @@ class MideaAir extends IPSModuleStrict
         ], 90);
 
         $this->registerOptionalVariable(
-            $this->cap($caps, $hasCaps, 'fan_swing'),
+            $this->ReadPropertyBoolean('DehumHasSwing'),
             'VerticalSwing',
             fn () => $this->RegisterVariableBoolean('VerticalSwing', $this->Translate('Air Vanes'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
@@ -917,7 +949,7 @@ class MideaAir extends IPSModuleStrict
         ], 110);
 
         $this->registerOptionalVariable(
-            $this->cap($caps, $hasCaps, 'water_level'),
+            $this->ReadPropertyBoolean('DehumHasWaterLevel'),
             'TankLevel',
             fn () => $this->RegisterVariableInteger('TankLevel', $this->Translate('Tank Level'), [
                 'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
@@ -944,50 +976,37 @@ class MideaAir extends IPSModuleStrict
         $this->EnableAction('SleepMode');
     }
 
-    /**
-     * Modi des Entfeuchters nach B5 (wie homeassistant-midea-air-appliances-lan):
-     * Soll-Feuchte und Dauerbetrieb immer, Smart bei 0x1f, Trocknen bei 0x20,
-     * Luftreinigung/Schimmelschutz nach dem Wert von 0x14 (1, 2 oder 3 = beide).
-     * Ohne ermittelte Capabilities werden alle Modi angeboten.
-     */
-    private function dehumidifierModeOptions(array $caps, bool $hasCaps): array
+    /** Modi des Entfeuchters: Soll-Feuchte und Dauerbetrieb immer, die übrigen nach den Checkboxen. */
+    private function dehumidifierModeOptions(): array
     {
-        $modeCap = (int) ($caps['mode_value'] ?? 0);
         $modes = [
             1 => ['Target Humidity', true],
             2 => ['Continuous',      true],
-            3 => ['Smart',           $caps['humidity'] ?? false],
-            4 => ['Dry',             $caps['dry_clothes'] ?? false],
-            6 => ['Purifier',        $modeCap === 1 || $modeCap === 3],
-            7 => ['Antimould',       $modeCap === 2 || $modeCap === 3],
+            3 => ['Smart',           $this->ReadPropertyBoolean('DehumModeSmart')],
+            4 => ['Dry',             $this->ReadPropertyBoolean('DehumModeDry')],
+            6 => ['Purifier',        $this->ReadPropertyBoolean('DehumModePurifier')],
+            7 => ['Antimould',       $this->ReadPropertyBoolean('DehumModeAntimould')],
         ];
 
         $options = [];
-        foreach ($modes as $value => [$caption, $supported]) {
-            if (!$hasCaps || $supported) {
+        foreach ($modes as $value => [$caption, $available]) {
+            if ($available) {
                 $options[] = ['Value' => $value, 'Caption' => $caption, 'IconActive' => false, 'IconValue' => '', 'Color' => -1];
             }
         }
         return $options;
     }
 
-    /**
-     * Lüfterstufen des Entfeuchters nach B5 0x10 (wie homeassistant-midea-air-appliances-lan):
-     * 7 = Niedrig/Mittel/Hoch, 3 = Niedrig/Hoch, 2 = nur Auto. Sonst alle drei Stufen.
-     */
-    private function dehumidifierFanSpeedOptions(array $caps, bool $hasCaps): array
+    /** Lüfterstufen des Entfeuchters: Niedrig und Hoch immer, Mittel nach der Checkbox. */
+    private function dehumidifierFanSpeedOptions(): array
     {
-        $fanCap = $hasCaps ? (int) ($caps['fan_speed_value'] ?? 0) : 0;
-        if ($fanCap === 2) {
-            return [['Value' => 101, 'Caption' => 'Auto', 'IconActive' => false, 'IconValue' => '', 'Color' => -1]];
+        if ($this->ReadPropertyBoolean('DehumFanSpeedMedium')) {
+            return self::DEHUMIDIFIER_FAN_SPEED_OPTIONS;
         }
-        if ($fanCap === 3) {
-            return array_values(array_filter(
-                self::DEHUMIDIFIER_FAN_SPEED_OPTIONS,
-                fn (array $opt) => $opt['Value'] !== 60
-            ));
-        }
-        return self::DEHUMIDIFIER_FAN_SPEED_OPTIONS;
+        return array_values(array_filter(
+            self::DEHUMIDIFIER_FAN_SPEED_OPTIONS,
+            fn (array $opt) => $opt['Value'] !== 60
+        ));
     }
 
     private function RegisterAirConditionerVariables(): void

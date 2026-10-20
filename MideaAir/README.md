@@ -97,6 +97,19 @@ Nicht unterstützte Betriebsmodi können hier deaktiviert werden. Der Modus-Ausw
 
 > **Hinweis:** Solange noch keine Capabilities ermittelt wurden, werden alle optionalen Variablen angezeigt. Nach dem ersten „Capabilities ermitteln" steuern ausschließlich die Checkboxen, welche Variablen registriert werden.
 
+### Manuelle Konfiguration (Entfeuchter)
+
+**„Capabilities ermitteln"** belegt diese Checkboxen aus der Meldung des Geräts vor. Manche Geräte melden Funktionen, die sie gar nicht haben, deshalb lassen sie sich danach von Hand ändern. Ab Werk ist alles aktiviert.
+
+| Checkbox | Wirkung |
+|---|---|
+| Smart (3), Trocknen (4), Luftreinigung (6), Schimmelschutz (7) | Modus in der Auswahl. Soll-Feuchte (1) und Dauerbetrieb (2) gibt es immer |
+| Lüfterstufe Mittel (60) verfügbar | Mittel in der Auswahl. Niedrig (40) und Hoch (80) gibt es immer |
+| Ionisator vorhanden | Variable `IonMode` |
+| Pumpe vorhanden | Variable `Pump` |
+| Lüftungslamellen vorhanden | Variable `VerticalSwing` |
+| Füllstandssensor vorhanden | Variable `TankLevel` |
+
 ### Token automatisch ermitteln (Cloud-Login)
 
 Die Cloud-Zugangsdaten werden ausschließlich einmalig zur Token-Ermittlung genutzt. Danach kommuniziert das Modul rein lokal.
@@ -179,11 +192,9 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | `Defrosting` | Abtauen | Boolean | ❌ |
 | `ErrorCode` | Fehlercode | Integer | ❌ |
 
-Nach „Capabilities ermitteln“ richten sich Modi und Lüfterstufen nach dem Gerät: Soll-Feuchte und Dauerbetrieb gibt es immer, Smart, Trocknen, Luftreinigung und Schimmelschutz nur, wenn das Gerät sie meldet. Je nach Gerät hat der Lüfter drei Stufen, nur Niedrig und Hoch oder nur Auto.
+Welche Modi und Lüfterstufen zur Auswahl stehen, steuert die manuelle Konfiguration (Entfeuchter).
 
-Wurden die Capabilities noch mit einer älteren Modulversion ermittelt, gelten sie beim Entfeuchter als nicht ermittelt, und alle Modi und Variablen bleiben stehen. Ein erneutes „Capabilities ermitteln“ stellt das auf das Gerät ein.
-
-² Nur vorhanden, wenn das Gerät die Funktion meldet (bzw. solange noch keine Capabilities ermittelt wurden).
+² Nur vorhanden, wenn die passende Checkbox in der manuellen Konfiguration (Entfeuchter) aktiviert ist.
 
 ## 5. Aktionsschaltflächen
 
