@@ -16,6 +16,7 @@
             "Manual Configuration (Air Conditioner)": "Manuelle Konfiguration (Klimaanlage)",
             "Features not reliably detectable via B5 query can be manually activated here.\nAfter changes click Apply – variables will be re-registered.": "Funktionen, die per B5-Abfrage nicht zuverlässig erkannt werden können, hier manuell aktivieren.\nNach Änderungen auf Übernehmen klicken – die Variablen werden dann neu registriert.",
             "Available Modes": "Verfügbare Modi",
+            "Additional Modes": "Zusätzliche Modi",
             "Cool (2)": "Kühlen (2)",
             "Dry (3)": "Trocknen (3)",
             "Heat (4)": "Heizen (4)",

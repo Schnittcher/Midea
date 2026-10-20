@@ -186,7 +186,7 @@
                 {
                     "type": "Label",
                     "bold": true,
-                    "caption": "Available Modes"
+                    "caption": "Additional Modes"
                 },
                 {
                     "type": "CheckBox",
