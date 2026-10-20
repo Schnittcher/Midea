@@ -5,6 +5,7 @@
 ### Neu
 
 - Entfeuchter: Panel „Manuelle Konfiguration (Entfeuchter)“ mit Checkboxen für die Modi Smart, Trocknen, Luftreinigung und Schimmelschutz, die Lüfterstufe Mittel sowie Ionisator, Pumpe, Lamellen und Füllstandssensor. „Capabilities ermitteln“ belegt sie aus der B5-Antwort vor, danach lassen sie sich von Hand ändern. Ab Werk ist alles aktiviert.
+- Die Konfiguration zeigt nur noch die manuelle Konfiguration des gewählten Gerätetyps. Beim Umstellen des Gerätetyps schaltet sie sofort um, schon vor dem Übernehmen.
 
 ### Geändert
 
