@@ -109,6 +109,8 @@ Nicht unterstützte Betriebsmodi können hier deaktiviert werden. Der Modus-Ausw
 | Pumpe vorhanden | Variable `Pump` |
 | Lüftungslamellen vorhanden | Variable `VerticalSwing` |
 | Füllstandssensor vorhanden | Variable `TankLevel` |
+| Filteranzeige vorhanden | Variable `FilterIndicator` |
+| Schlafmodus vorhanden | Variable `SleepMode`. Das Gerät meldet den Schlafmodus nicht, „Capabilities ermitteln“ lässt diese Checkbox deshalb unverändert. Manche Geräte (z. B. Comfee 0xA1) reagieren nicht darauf, dann den Haken entfernen |
 
 ### Token automatisch ermitteln (Cloud-Login)
 
@@ -184,11 +186,11 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | `IndoorTemperature` | Raumtemperatur | Float | ❌ |
 | `IonMode` | Ionisierung² | Boolean | ✅ |
 | `Pump` | Pumpe² | Boolean | ✅ |
-| `SleepMode` | Schlafmodus | Boolean | ✅ |
+| `SleepMode` | Schlafmodus² | Boolean | ✅ |
 | `VerticalSwing` | Lüftungslamellen² | Boolean | ✅ |
 | `TankFull` | Tank voll | Boolean | ❌ |
 | `TankLevel` | Tankfüllstand² | Integer | ❌ |
-| `FilterIndicator` | Filter reinigen | Boolean | ❌ |
+| `FilterIndicator` | Filter reinigen² | Boolean | ❌ |
 | `Defrosting` | Abtauen | Boolean | ❌ |
 | `ErrorCode` | Fehlercode | Integer | ❌ |
 

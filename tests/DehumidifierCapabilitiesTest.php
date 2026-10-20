@@ -19,7 +19,7 @@ class DehumidifierCapabilitiesTest extends TestCase
     // Attribut 'Capabilities', wie es 1.0.2 für den Comfee-Frame gespeichert hat
     private const COMFEE_A1_STORED_BY_1_0_2 = '{"fan_speed":true,"fan_speed_value":7,"humidity":true}';
 
-    private const OPTIONAL_VARIABLES = ['IonMode', 'Pump', 'VerticalSwing', 'TankLevel'];
+    private const OPTIONAL_VARIABLES = ['IonMode', 'Pump', 'VerticalSwing', 'TankLevel', 'FilterIndicator'];
 
     private int $id;
     private MideaAir $module;
@@ -74,6 +74,20 @@ class DehumidifierCapabilitiesTest extends TestCase
         $this->assertSame([1, 2, 4], $this->modeValues());
         $this->assertTrue($this->exists('Pump'));
         $this->assertFalse($this->exists('IonMode'));
+    }
+
+    public function testSleepModeOnlyByCheckbox(): void
+    {
+        // B5 meldet keinen Schlafmodus, „Capabilities ermitteln“ lässt die Checkbox stehen
+        $this->detect(self::COMFEE_A1);
+        $this->assertTrue($this->exists('SleepMode'));
+
+        // Der Comfee reagiert nicht auf das Sleep-Bit, der Anwender wählt ihn ab
+        IPS_SetProperty($this->id, 'DehumHasSleepMode', false);
+        IPS_ApplyChanges($this->id);
+        $this->registerVariables();
+
+        $this->assertFalse($this->exists('SleepMode'));
     }
 
     // Was DetectCapabilities() nach der Antwort des Geräts macht, ohne Gerät

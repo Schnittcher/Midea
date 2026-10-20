@@ -237,6 +237,16 @@
                     "type": "CheckBox",
                     "name": "DehumHasWaterLevel",
                     "caption": "Tank Level Sensor available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasFilter",
+                    "caption": "Filter Indicator available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasSleepMode",
+                    "caption": "Sleep Mode available (not reported by the device)"
                 }
             ]
         },

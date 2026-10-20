@@ -46,6 +46,7 @@ class DetectionDialogTest extends TestCase
             '✗ Pump available',
             '✗ Air Vanes available',
             '✗ Tank Level Sensor available',
+            '✗ Filter Indicator available',
         ], $this->checkboxLines($dialog));
         $this->assertFalse(IPS_GetProperty($this->id, 'DehumHasPump'));
         $this->assertTrue(IPS_GetProperty($this->id, 'DehumModeDry'));

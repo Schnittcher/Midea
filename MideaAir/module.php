@@ -97,6 +97,9 @@ class MideaAir extends IPSModuleStrict
         $this->RegisterPropertyBoolean('DehumHasPump', true);
         $this->RegisterPropertyBoolean('DehumHasSwing', true);
         $this->RegisterPropertyBoolean('DehumHasWaterLevel', true);
+        $this->RegisterPropertyBoolean('DehumHasFilter', true);
+        // Schlafmodus meldet B5 nicht, nur von Hand (der Comfee 0xA1 reagiert nicht auf das Bit)
+        $this->RegisterPropertyBoolean('DehumHasSleepMode', true);
 
         // Polling
         $this->RegisterPropertyInteger('UpdateInterval', 60);
@@ -785,6 +788,7 @@ class MideaAir extends IPSModuleStrict
             'DehumHasPump'        => $caps['pump'] ?? false,
             'DehumHasSwing'       => $caps['fan_swing'] ?? false,
             'DehumHasWaterLevel'  => $caps['water_level'] ?? false,
+            'DehumHasFilter'      => $caps['filter'] ?? false,
         ];
         return array_map('boolval', $properties);
     }
@@ -996,9 +1000,14 @@ class MideaAir extends IPSModuleStrict
             fn () => $this->EnableAction('Pump')
         );
 
-        $this->RegisterVariableBoolean('SleepMode', $this->Translate('Sleep Mode'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-        ], 90);
+        $this->registerOptionalVariable(
+            $this->ReadPropertyBoolean('DehumHasSleepMode'),
+            'SleepMode',
+            fn () => $this->RegisterVariableBoolean('SleepMode', $this->Translate('Sleep Mode'), [
+                'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            ], 90),
+            fn () => $this->EnableAction('SleepMode')
+        );
 
         $this->registerOptionalVariable(
             $this->ReadPropertyBoolean('DehumHasSwing'),
@@ -1022,9 +1031,13 @@ class MideaAir extends IPSModuleStrict
             ], 120)
         );
 
-        $this->RegisterVariableBoolean('FilterIndicator', $this->Translate('Clean Filter'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-        ], 130);
+        $this->registerOptionalVariable(
+            $this->ReadPropertyBoolean('DehumHasFilter'),
+            'FilterIndicator',
+            fn () => $this->RegisterVariableBoolean('FilterIndicator', $this->Translate('Clean Filter'), [
+                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            ], 130)
+        );
 
         $this->RegisterVariableBoolean('Defrosting', $this->Translate('Defrosting'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
@@ -1038,7 +1051,6 @@ class MideaAir extends IPSModuleStrict
         $this->EnableAction('Mode');
         $this->EnableAction('FanSpeed');
         $this->EnableAction('TargetHumidity');
-        $this->EnableAction('SleepMode');
     }
 
     /** Modi des Entfeuchters: Soll-Feuchte und Dauerbetrieb immer, die übrigen nach den Checkboxen. */
@@ -1325,11 +1337,11 @@ class MideaAir extends IPSModuleStrict
         $this->SetValue('IndoorTemperature', $s->indoorTemperature);
         $this->setSafeValue('IonMode', $s->ionMode);
         $this->setSafeValue('Pump', $s->pumpSwitch);
-        $this->SetValue('SleepMode', $s->sleepSwitch);
+        $this->setSafeValue('SleepMode', $s->sleepSwitch);
         $this->setSafeValue('VerticalSwing', $s->verticalSwing);
         $this->SetValue('TankFull', $s->tankFull);
         $this->setSafeValue('TankLevel', $s->tankLevel);
-        $this->SetValue('FilterIndicator', $s->filterIndicator);
+        $this->setSafeValue('FilterIndicator', $s->filterIndicator);
         $this->SetValue('Defrosting', $s->defrosting);
         $this->SetValue('ErrorCode', $s->errCode);
     }

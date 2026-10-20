@@ -13,6 +13,7 @@
 - Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
 - Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
 - Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
+- Entfeuchter: Filteranzeige und Schlafmodus hängen ebenfalls an Checkboxen. „Filteranzeige vorhanden“ belegt „Capabilities ermitteln“ aus der B5-Antwort vor. Den Schlafmodus meldet das Gerät nicht, diese Checkbox setzt nur der Anwender. Beide sind ab Werk angehakt.
 - Ionisierung, Pumpe, Lamellen und Tankfüllstand gibt es nur noch, wenn die zugehörige Checkbox gesetzt ist. Wird sie abgewählt, auch durch „Capabilities ermitteln“, löscht das Modul die Variable, und ihre Verknüpfungen und Archivzuordnung gehen verloren.
 
 ### Fixes
