@@ -14,7 +14,7 @@
 - Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
 - Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
 - Entfeuchter: Filteranzeige und Schlafmodus hängen ebenfalls an Checkboxen. „Filteranzeige vorhanden“ belegt „Capabilities ermitteln“ aus der B5-Antwort vor. Den Schlafmodus meldet das Gerät nicht, diese Checkbox setzt nur der Anwender. Beide sind ab Werk angehakt.
-- Ionisierung, Pumpe, Lamellen und Tankfüllstand gibt es nur noch, wenn die zugehörige Checkbox gesetzt ist. Wird sie abgewählt, auch durch „Capabilities ermitteln“, löscht das Modul die Variable, und ihre Verknüpfungen und Archivzuordnung gehen verloren.
+- Ionisierung, Pumpe, Lamellen, Tankfüllstand, Filteranzeige und Schlafmodus gibt es nur noch, wenn die zugehörige Checkbox gesetzt ist. Wird sie abgewählt, auch durch „Capabilities ermitteln“, löscht das Modul die Variable, und ihre Verknüpfungen und Archivzuordnung gehen verloren. Meldet das Gerät keine Filteranzeige (etwa der Comfee 0xA1), verschwindet `FilterIndicator` schon beim ersten „Capabilities ermitteln“ nach dem Update.
 
 ### Fixes
 
