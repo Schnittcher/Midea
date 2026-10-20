@@ -181,6 +181,8 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 
 Nach „Capabilities ermitteln“ richten sich Modi und Lüfterstufen nach dem Gerät: Soll-Feuchte und Dauerbetrieb gibt es immer, Smart, Trocknen, Luftreinigung und Schimmelschutz nur, wenn das Gerät sie meldet. Je nach Gerät hat der Lüfter drei Stufen, nur Niedrig und Hoch oder nur Auto.
 
+Wurden die Capabilities noch mit einer älteren Modulversion ermittelt, gelten sie beim Entfeuchter als nicht ermittelt, und alle Modi und Variablen bleiben stehen. Ein erneutes „Capabilities ermitteln“ stellt das auf das Gerät ein.
+
 ² Nur vorhanden, wenn das Gerät die Funktion meldet (bzw. solange noch keine Capabilities ermittelt wurden).
 
 ## 5. Aktionsschaltflächen

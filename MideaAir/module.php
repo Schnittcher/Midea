@@ -38,6 +38,9 @@ class MideaAir extends IPSModuleStrict
         ['Value' => 3, 'Caption' => 'Level 3', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
     ];
 
+    // Version des gespeicherten B5-Ergebnisses. Erhöhen, wenn der Parser neue Schlüssel liefert.
+    private const CAPABILITIES_VERSION = 2;
+
     // ── Modul-Lifecycle ───────────────────────────────────────────────────
 
     public function Create(): void
@@ -599,7 +602,7 @@ class MideaAir extends IPSModuleStrict
             $caps = $this->parseB5Response($raw, $deviceType);
 
             // Speichern
-            $this->WriteAttributeString('Capabilities', json_encode($caps));
+            $this->storeCapabilities($caps);
             $this->SendDebug('B5', 'Capabilities erkannt: ' . implode(', ', array_keys($caps)), 0);
 
             // Manuelle Properties aus B5-Ergebnis vorbelegen –
@@ -745,6 +748,12 @@ class MideaAir extends IPSModuleStrict
         // B5 liefert dafür keine zuverlässigen Werte, daher rein manuelle Steuerung.
     }
 
+    /** Speichert das B5-Ergebnis zusammen mit der Version des Parsers, der es erzeugt hat. */
+    private function storeCapabilities(array $caps): void
+    {
+        $this->WriteAttributeString('Capabilities', json_encode($caps + ['_version' => self::CAPABILITIES_VERSION]));
+    }
+
     /** Parst die B5-Capabilities-Antwort des Geräts. */
     private function parseB5Response(string $raw, string $deviceType): array
     {
@@ -831,7 +840,12 @@ class MideaAir extends IPSModuleStrict
     private function RegisterDehumidifierVariables(): void
     {
         $caps = json_decode($this->ReadAttributeString('Capabilities'), true) ?: [];
-        $hasCaps = !empty($caps);
+        // Ältere Versionen kannten Pumpe, Tankfüllstand, Trocknen und die Zusatzmodi nicht. Ihr Ergebnis
+        // gilt als nicht ermittelt, sonst fehlen Modi und vorhandene Variablen würden gelöscht.
+        $hasCaps = ($caps['_version'] ?? 0) === self::CAPABILITIES_VERSION;
+        if (!$hasCaps && !empty($caps)) {
+            $this->SendDebug('B5', 'Capabilities stammen von einer älteren Version und werden ignoriert, bitte neu ermitteln', 0);
+        }
 
         $this->RegisterVariableBoolean('Running', $this->Translate('Running'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
