@@ -179,7 +179,7 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | `Running` | Betrieb | Boolean | ✅ |
 | `Mode` | Modus | Integer | ✅ (1=Soll-Feuchte, 2=Dauerbetrieb, 3=Smart, 4=Trocknen, 6=Luftreinigung, 7=Schimmelschutz) |
 | `FanSpeed` | Lüfterstufe | Integer | ✅ (40=Niedrig, 60=Mittel, 80=Hoch) |
-| `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %) |
+| `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %, andere Werte werden begrenzt) |
 | `CurrentHumidity` | Ist-Feuchte | Float | ❌ |
 | `IndoorTemperature` | Raumtemperatur | Float | ❌ |
 | `IonMode` | Ionisierung² | Boolean | ✅ |

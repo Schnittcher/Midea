@@ -38,8 +38,9 @@ class MideaAir extends IPSModuleStrict
         ['Value' => 3, 'Caption' => 'Level 3', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
     ];
 
-    // Version des gespeicherten B5-Ergebnisses. Erhöhen, wenn der Parser neue Schlüssel liefert.
-    private const CAPABILITIES_VERSION = 2;
+    // Soll-Feuchte des Entfeuchters wie in der App und der HA-Integration (MIN/MAX_TARGET_HUMIDITY)
+    private const DEHUMIDIFIER_HUMIDITY_MIN = 35;
+    private const DEHUMIDIFIER_HUMIDITY_MAX = 85;
 
     // ── Modul-Lifecycle ───────────────────────────────────────────────────
 
@@ -786,10 +787,10 @@ class MideaAir extends IPSModuleStrict
         }
     }
 
-    /** Speichert das B5-Ergebnis zusammen mit der Version des Parsers, der es erzeugt hat. */
+    /** Speichert das B5-Ergebnis. */
     private function storeCapabilities(array $caps): void
     {
-        $this->WriteAttributeString('Capabilities', json_encode($caps + ['_version' => self::CAPABILITIES_VERSION]));
+        $this->WriteAttributeString('Capabilities', json_encode($caps));
     }
 
     /** Parst die B5-Capabilities-Antwort des Geräts. */
@@ -895,8 +896,8 @@ class MideaAir extends IPSModuleStrict
 
         $this->RegisterVariableInteger('TargetHumidity', $this->Translate('Target Humidity'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SLIDER,
-            'MIN'          => 35,
-            'MAX'          => 85,
+            'MIN'          => self::DEHUMIDIFIER_HUMIDITY_MIN,
+            'MAX'          => self::DEHUMIDIFIER_HUMIDITY_MAX,
             'STEP_SIZE'    => 5,
             'SUFFIX'       => ' %',
         ], 40);
@@ -1326,6 +1327,11 @@ class MideaAir extends IPSModuleStrict
             'SleepMode'     => 'sleepSwitch',
             'VerticalSwing' => 'verticalSwing',
         ];
+
+        // Der Slider begrenzt nur die Bedienung, Skripte können jeden Wert schicken
+        if ($ident === 'TargetHumidity') {
+            $value = min(self::DEHUMIDIFIER_HUMIDITY_MAX, max(self::DEHUMIDIFIER_HUMIDITY_MIN, (int) $value));
+        }
 
         if (isset($mapping[$ident])) {
             $state[$mapping[$ident]] = $value;
