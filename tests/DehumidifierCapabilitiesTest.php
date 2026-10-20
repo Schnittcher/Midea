@@ -81,7 +81,7 @@ class DehumidifierCapabilitiesTest extends TestCase
     {
         $caps = (new ReflectionMethod($this->module, 'parseB5Response'))->invoke($this->module, hex2bin($b5Hex), MideaAir::DEVICE_DEHUMIDIFIER);
         (new ReflectionMethod($this->module, 'storeCapabilities'))->invoke($this->module, $caps);
-        (new ReflectionMethod($this->module, 'applyB5ToDehumidifierProperties'))->invoke($this->module, $caps);
+        (new ReflectionMethod($this->module, 'applyCapabilities'))->invoke($this->module, $caps, MideaAir::DEVICE_DEHUMIDIFIER);
         IPS_ApplyChanges($this->id);
         $this->registerVariables();
     }

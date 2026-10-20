@@ -638,28 +638,15 @@ class MideaAir extends IPSModuleStrict
 
             // Speichern
             $this->storeCapabilities($caps);
-            $this->SendDebug('B5', 'Capabilities erkannt: ' . implode(', ', array_keys($caps)), 0);
+            $this->SendDebug('B5', 'Capabilities erkannt: ' . json_encode($caps), 0);
 
-            // Manuelle Properties aus B5-Ergebnis vorbelegen –
-            // damit steuern die Checkboxen die Variablen, und der Nutzer kann sie anpassen
-            if ($deviceType === self::DEVICE_AIRCON) {
-                $this->applyB5ToProperties($caps);
-            } else {
-                $this->applyB5ToDehumidifierProperties($caps);
-            }
+            // Checkboxen aus dem B5-Ergebnis vorbelegen, danach steuern sie die Variablen
+            $dialog = $this->applyCapabilities($caps, $deviceType);
 
             // Variablen neu registrieren
             IPS_ApplyChanges($this->InstanceID);
 
-            $lines = ["✅ Capabilities vom Gerät erkannt:\n"];
-            foreach ($caps as $key => $value) {
-                if (is_int($value)) {
-                    $lines[] = sprintf('  %-30s = %d', $key, $value);
-                } else {
-                    $lines[] = sprintf('  %-30s = %s', $key, $value ? 'JA' : 'NEIN');
-                }
-            }
-            return implode("\n", $lines);
+            return $dialog;
 
         } catch (Exception $e) {
             return 'Fehler: ' . $e->getMessage();
@@ -750,7 +737,7 @@ class MideaAir extends IPSModuleStrict
      * Läuft innerhalb von DetectCapabilities() vor IPS_ApplyChanges().
      * Danach steuern ausschließlich die Checkboxen die Variablenregistrierung.
      */
-    private function applyB5ToProperties(array $caps): void
+    private function airConditionerPropertiesFromB5(array $caps): array
     {
         // Direktes Mapping Cap-Key → Property-Name
         $map = [
@@ -763,26 +750,20 @@ class MideaAir extends IPSModuleStrict
             'HasIndoorHumidity' => 'has_indoor_humidity',
             'HasCurrentPower'   => 'electricity',
         ];
+        $properties = [];
         foreach ($map as $property => $capKey) {
-            IPS_SetProperty($this->InstanceID, $property, (bool) ($caps[$capKey] ?? false));
+            $properties[$property] = (bool) ($caps[$capKey] ?? false);
         }
 
         // Vertikaler Swing: fan_swing ODER has_vertical_fan
-        IPS_SetProperty(
-            $this->InstanceID,
-            'HasVerticalSwing',
-            (bool) (($caps['fan_swing'] ?? false) || ($caps['has_vertical_fan'] ?? false))
-        );
+        $properties['HasVerticalSwing'] = (bool) (($caps['fan_swing'] ?? false) || ($caps['has_vertical_fan'] ?? false));
 
         // Horizontaler Swing
-        IPS_SetProperty(
-            $this->InstanceID,
-            'HasHorizontalSwing',
-            (bool) ($caps['has_horizontal_fan'] ?? false)
-        );
+        $properties['HasHorizontalSwing'] = (bool) ($caps['has_horizontal_fan'] ?? false);
 
         // FanSpeedSilent / FanSpeedMedium werden NICHT aus B5 gesetzt –
         // B5 liefert dafür keine zuverlässigen Werte, daher rein manuelle Steuerung.
+        return $properties;
     }
 
     /**
@@ -791,7 +772,7 @@ class MideaAir extends IPSModuleStrict
      * (1, 2 oder 3 = beide), Mittel fehlt nur bei Lüfter-Wert 3 (Niedrig/Hoch).
      * Danach steuern die Checkboxen die Variablen und können manuell überschrieben werden.
      */
-    private function applyB5ToDehumidifierProperties(array $caps): void
+    private function dehumidifierPropertiesFromB5(array $caps): array
     {
         $modeCap = (int) ($caps['mode_value'] ?? 0);
         $properties = [
@@ -805,9 +786,59 @@ class MideaAir extends IPSModuleStrict
             'DehumHasSwing'       => $caps['fan_swing'] ?? false,
             'DehumHasWaterLevel'  => $caps['water_level'] ?? false,
         ];
-        foreach ($properties as $property => $value) {
-            IPS_SetProperty($this->InstanceID, $property, (bool) $value);
+        return array_map('boolval', $properties);
+    }
+
+    /**
+     * Belegt die Checkboxen der manuellen Konfiguration aus dem B5-Ergebnis vor, zieht sie im offenen
+     * Formular nach und liefert den Text für den Dialog von „Capabilities ermitteln“.
+     */
+    private function applyCapabilities(array $caps, string $deviceType): string
+    {
+        if ($deviceType === self::DEVICE_DEHUMIDIFIER) {
+            $properties = $this->dehumidifierPropertiesFromB5($caps);
+            $panel = 'PanelDehumidifier';
+        } else {
+            $properties = $this->airConditionerPropertiesFromB5($caps);
+            $panel = 'PanelAircon';
         }
+        foreach ($properties as $property => $value) {
+            IPS_SetProperty($this->InstanceID, $property, $value);
+            $this->UpdateFormField($property, 'value', $value);
+        }
+
+        // Beschriftungen und Reihenfolge wie im Formular
+        [$caption, $checkboxes] = $this->formPanel($panel);
+        $lines = [
+            '✅ ' . sprintf($this->Translate('Capabilities detected. The checkboxes under "%s" are now set as follows:'), $this->Translate($caption)),
+            '',
+        ];
+        foreach ($checkboxes as $property => $label) {
+            if (isset($properties[$property])) {
+                $lines[] = ($properties[$property] ? '✓ ' : '✗ ') . $this->Translate($label);
+            }
+        }
+        $lines[] = '';
+        $lines[] = $this->Translate('Anything the device reports incorrectly can be changed there by hand.');
+        return implode("\n", $lines);
+    }
+
+    /** @return array{0: string, 1: array<string, string>} Titel eines Panels aus form.json und seine Checkboxen (Name => Beschriftung) */
+    private function formPanel(string $name): array
+    {
+        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        foreach ($form['elements'] as $element) {
+            if (($element['name'] ?? '') === $name) {
+                $checkboxes = [];
+                foreach ($element['items'] as $item) {
+                    if ($item['type'] === 'CheckBox') {
+                        $checkboxes[$item['name']] = $item['caption'];
+                    }
+                }
+                return [$element['caption'], $checkboxes];
+            }
+        }
+        return [$name, []];
     }
 
     /** Sichtbarkeit der Panels „Manuelle Konfiguration“ je Gerätetyp, wie in ApplyChanges gilt alles außer Entfeuchter als Klimaanlage. */

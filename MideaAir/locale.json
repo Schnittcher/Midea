@@ -2,6 +2,8 @@
     "translations": {
         "de": {
             "Device Type": "Gerätetyp",
+            "Capabilities detected. The checkboxes under \"%s\" are now set as follows:": "Capabilities ermittelt. Die Checkboxen unter „%s“ stehen jetzt so:",
+            "Anything the device reports incorrectly can be changed there by hand.": "Was das Gerät falsch meldet, lässt sich dort von Hand ändern.",
             "Dehumidifier (0xA1)": "Entfeuchter (0xA1)",
             "Air Conditioner (0xAC)": "Klimaanlage (0xAC)",
             "IP Address": "IP-Adresse",

@@ -9,6 +9,7 @@
 
 ### Geändert
 
+- „Capabilities ermitteln“ zeigt statt der B5-Rohwerte die vorbelegten Checkboxen mit ✓ oder ✗ und zieht sie im offenen Formular gleich nach. Die Rohwerte stehen im Debug unter `B5`.
 - Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
 - Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
 - Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
