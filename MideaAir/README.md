@@ -169,15 +169,19 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %) |
 | `CurrentHumidity` | Ist-Feuchte | Float | ❌ |
 | `IndoorTemperature` | Raumtemperatur | Float | ❌ |
-| `IonMode` | Ionisierung | Boolean | ✅ |
-| `Pump` | Pumpe | Boolean | ✅ |
+| `IonMode` | Ionisierung² | Boolean | ✅ |
+| `Pump` | Pumpe² | Boolean | ✅ |
 | `SleepMode` | Schlafmodus | Boolean | ✅ |
-| `VerticalSwing` | Lüftungslamellen | Boolean | ✅ |
+| `VerticalSwing` | Lüftungslamellen² | Boolean | ✅ |
 | `TankFull` | Tank voll | Boolean | ❌ |
-| `TankLevel` | Tankfüllstand | Integer | ❌ |
+| `TankLevel` | Tankfüllstand² | Integer | ❌ |
 | `FilterIndicator` | Filter reinigen | Boolean | ❌ |
 | `Defrosting` | Abtauen | Boolean | ❌ |
 | `ErrorCode` | Fehlercode | Integer | ❌ |
+
+Nach „Capabilities ermitteln“ richten sich Modi und Lüfterstufen nach dem Gerät: Soll-Feuchte und Dauerbetrieb gibt es immer, Smart, Trocknen, Luftreinigung und Schimmelschutz nur, wenn das Gerät sie meldet. Je nach Gerät hat der Lüfter drei Stufen, nur Niedrig und Hoch oder nur Auto.
+
+² Nur vorhanden, wenn das Gerät die Funktion meldet (bzw. solange noch keine Capabilities ermittelt wurden).
 
 ## 5. Aktionsschaltflächen
 

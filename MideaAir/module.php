@@ -773,6 +773,7 @@ class MideaAir extends IPSModuleStrict
             "\x15\x00" => 'has_indoor_humidity',
         ];
 
+        // Entfeuchter-Schlüssel wie midea-beautiful-air (0x1f = Smart-Modus, 0x14 = Zusatzmodi 6/7)
         $dehumCaps = [
             "\x1f\x02" => 'humidity',
             "\x14\x02" => 'mode',
@@ -780,6 +781,11 @@ class MideaAir extends IPSModuleStrict
             "\x10\x02" => 'fan_speed',
             "\x22\x02" => 'fahrenheit',
             "\x15\x02" => 'fan_swing',
+            "\x17\x02" => 'filter',
+            "\x1d\x02" => 'pump',
+            "\x20\x02" => 'dry_clothes',
+            "\x24\x02" => 'light',
+            "\x2d\x02" => 'water_level',
         ];
 
         $mapping = $deviceType === self::DEVICE_AIRCON ? $acCaps : $dehumCaps;
@@ -801,17 +807,19 @@ class MideaAir extends IPSModuleStrict
 
         for ($n = 0; $n < $count && $i + 3 <= strlen($data) - 1; $n++) {
             $key = substr($data, $i, 2);
+            $len = ord($data[$i + 2]);
             $val = ord($data[$i + 3]);
             if (isset($mapping[$key])) {
                 $name = $mapping[$key];
                 $caps[$name] = $val > 0;
-                // Rohwert für fan_speed separat speichern (zur Stufenerkennung)
-                if ($name === 'fan_speed') {
-                    $caps['fan_speed_value'] = $val;
-                    $this->SendDebug('B5', "fan_speed Rohwert: $val", 0);
+                // Rohwerte für fan_speed (Stufen) und mode (Zusatzmodi) separat speichern
+                if ($name === 'fan_speed' || $name === 'mode') {
+                    $caps[$name . '_value'] = $val;
+                    $this->SendDebug('B5', "$name Rohwert: $val", 0);
                 }
             }
-            $i += 4;
+            // Eintrag = 2 Bytes Schlüssel + 1 Byte Länge + Wert
+            $i += 3 + max($len, 1);
         }
 
         return $caps;
@@ -821,26 +829,21 @@ class MideaAir extends IPSModuleStrict
 
     private function RegisterDehumidifierVariables(): void
     {
+        $caps = json_decode($this->ReadAttributeString('Capabilities'), true) ?: [];
+        $hasCaps = !empty($caps);
+
         $this->RegisterVariableBoolean('Running', $this->Translate('Running'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
         ], 10);
 
         $this->RegisterVariableInteger('Mode', $this->Translate('Mode'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
-            'OPTIONS'      => json_encode($this->translateOptions([
-                // 1–4 am Comfee 0xA1 gemessen, 6/7 aus homeassistant-midea-air-appliances-lan (nur bei B5 0x14)
-                ['Value' => 1, 'Caption' => 'Target Humidity', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 2, 'Caption' => 'Continuous',      'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 3, 'Caption' => 'Smart',           'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 4, 'Caption' => 'Dry',             'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 6, 'Caption' => 'Purifier',        'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 7, 'Caption' => 'Antimould',       'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-            ])),
+            'OPTIONS'      => json_encode($this->translateOptions($this->dehumidifierModeOptions($caps, $hasCaps))),
         ], 20);
 
         $this->RegisterVariableInteger('FanSpeed', $this->Translate('Fan Speed'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
-            'OPTIONS'      => json_encode($this->translateOptions(self::DEHUMIDIFIER_FAN_SPEED_OPTIONS)),
+            'OPTIONS'      => json_encode($this->translateOptions($this->dehumidifierFanSpeedOptions($caps, $hasCaps))),
         ], 30);
 
         $this->RegisterVariableInteger('TargetHumidity', $this->Translate('Target Humidity'), [
@@ -863,30 +866,49 @@ class MideaAir extends IPSModuleStrict
             'DIGITS'       => 1,
         ], 60);
 
-        $this->RegisterVariableBoolean('IonMode', $this->Translate('Ionization'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-        ], 70);
+        $this->registerOptionalVariable(
+            $this->cap($caps, $hasCaps, 'anion'),
+            'IonMode',
+            fn () => $this->RegisterVariableBoolean('IonMode', $this->Translate('Ionization'), [
+                'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            ], 70),
+            fn () => $this->EnableAction('IonMode')
+        );
 
-        $this->RegisterVariableBoolean('Pump', $this->Translate('Pump'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-        ], 80);
+        $this->registerOptionalVariable(
+            $this->cap($caps, $hasCaps, 'pump'),
+            'Pump',
+            fn () => $this->RegisterVariableBoolean('Pump', $this->Translate('Pump'), [
+                'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            ], 80),
+            fn () => $this->EnableAction('Pump')
+        );
 
         $this->RegisterVariableBoolean('SleepMode', $this->Translate('Sleep Mode'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
         ], 90);
 
-        $this->RegisterVariableBoolean('VerticalSwing', $this->Translate('Air Vanes'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-        ], 100);
+        $this->registerOptionalVariable(
+            $this->cap($caps, $hasCaps, 'fan_swing'),
+            'VerticalSwing',
+            fn () => $this->RegisterVariableBoolean('VerticalSwing', $this->Translate('Air Vanes'), [
+                'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            ], 100),
+            fn () => $this->EnableAction('VerticalSwing')
+        );
 
         $this->RegisterVariableBoolean('TankFull', $this->Translate('Tank Full'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
         ], 110);
 
-        $this->RegisterVariableInteger('TankLevel', $this->Translate('Tank Level'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-            'SUFFIX'       => ' %',
-        ], 120);
+        $this->registerOptionalVariable(
+            $this->cap($caps, $hasCaps, 'water_level'),
+            'TankLevel',
+            fn () => $this->RegisterVariableInteger('TankLevel', $this->Translate('Tank Level'), [
+                'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                'SUFFIX'       => ' %',
+            ], 120)
+        );
 
         $this->RegisterVariableBoolean('FilterIndicator', $this->Translate('Clean Filter'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
@@ -904,10 +926,53 @@ class MideaAir extends IPSModuleStrict
         $this->EnableAction('Mode');
         $this->EnableAction('FanSpeed');
         $this->EnableAction('TargetHumidity');
-        $this->EnableAction('IonMode');
-        $this->EnableAction('Pump');
         $this->EnableAction('SleepMode');
-        $this->EnableAction('VerticalSwing');
+    }
+
+    /**
+     * Modi des Entfeuchters nach B5 (wie homeassistant-midea-air-appliances-lan):
+     * Soll-Feuchte und Dauerbetrieb immer, Smart bei 0x1f, Trocknen bei 0x20,
+     * Luftreinigung/Schimmelschutz nach dem Wert von 0x14 (1, 2 oder 3 = beide).
+     * Ohne ermittelte Capabilities werden alle Modi angeboten.
+     */
+    private function dehumidifierModeOptions(array $caps, bool $hasCaps): array
+    {
+        $modeCap = (int) ($caps['mode_value'] ?? 0);
+        $modes = [
+            1 => ['Target Humidity', true],
+            2 => ['Continuous',      true],
+            3 => ['Smart',           $caps['humidity'] ?? false],
+            4 => ['Dry',             $caps['dry_clothes'] ?? false],
+            6 => ['Purifier',        $modeCap === 1 || $modeCap === 3],
+            7 => ['Antimould',       $modeCap === 2 || $modeCap === 3],
+        ];
+
+        $options = [];
+        foreach ($modes as $value => [$caption, $supported]) {
+            if (!$hasCaps || $supported) {
+                $options[] = ['Value' => $value, 'Caption' => $caption, 'IconActive' => false, 'IconValue' => '', 'Color' => -1];
+            }
+        }
+        return $options;
+    }
+
+    /**
+     * Lüfterstufen des Entfeuchters nach B5 0x10 (wie homeassistant-midea-air-appliances-lan):
+     * 7 = Niedrig/Mittel/Hoch, 3 = Niedrig/Hoch, 2 = nur Auto. Sonst alle drei Stufen.
+     */
+    private function dehumidifierFanSpeedOptions(array $caps, bool $hasCaps): array
+    {
+        $fanCap = $hasCaps ? (int) ($caps['fan_speed_value'] ?? 0) : 0;
+        if ($fanCap === 2) {
+            return [['Value' => 101, 'Caption' => 'Auto', 'IconActive' => false, 'IconValue' => '', 'Color' => -1]];
+        }
+        if ($fanCap === 3) {
+            return array_values(array_filter(
+                self::DEHUMIDIFIER_FAN_SPEED_OPTIONS,
+                fn (array $opt) => $opt['Value'] !== 60
+            ));
+        }
+        return self::DEHUMIDIFIER_FAN_SPEED_OPTIONS;
     }
 
     private function RegisterAirConditionerVariables(): void
@@ -1159,12 +1224,12 @@ class MideaAir extends IPSModuleStrict
         $this->SetValue('TargetHumidity', (int) round($s->targetHumidity));
         $this->SetValue('CurrentHumidity', $s->currentHumidity);
         $this->SetValue('IndoorTemperature', $s->indoorTemperature);
-        $this->SetValue('IonMode', $s->ionMode);
-        $this->SetValue('Pump', $s->pumpSwitch);
+        $this->setSafeValue('IonMode', $s->ionMode);
+        $this->setSafeValue('Pump', $s->pumpSwitch);
         $this->SetValue('SleepMode', $s->sleepSwitch);
-        $this->SetValue('VerticalSwing', $s->verticalSwing);
+        $this->setSafeValue('VerticalSwing', $s->verticalSwing);
         $this->SetValue('TankFull', $s->tankFull);
-        $this->SetValue('TankLevel', $s->tankLevel);
+        $this->setSafeValue('TankLevel', $s->tankLevel);
         $this->SetValue('FilterIndicator', $s->filterIndicator);
         $this->SetValue('Defrosting', $s->defrosting);
         $this->SetValue('ErrorCode', $s->errCode);
