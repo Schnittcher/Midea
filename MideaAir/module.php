@@ -216,6 +216,14 @@ class MideaAir extends IPSModuleStrict
 
     public function RequestAction(string $Ident, mixed $Value): void
     {
+        // Gerätetyp im Formular umgestellt, noch nicht übernommen (onChange in form.json)
+        if ($Ident === 'DeviceType') {
+            foreach ($this->manualConfigurationPanels((string) $Value) as $panel => $visible) {
+                $this->UpdateFormField($panel, 'visible', $visible);
+            }
+            return;
+        }
+
         $deviceType = $this->ReadPropertyString('DeviceType');
         try {
             if ($deviceType === self::DEVICE_DEHUMIDIFIER) {
@@ -226,6 +234,21 @@ class MideaAir extends IPSModuleStrict
         } catch (Exception $e) {
             $this->LogMessage('RequestAction-Fehler: ' . $e->getMessage(), KL_ERROR);
         }
+    }
+
+    /** Zeigt nur die manuelle Konfiguration des gewählten Gerätetyps. */
+    public function GetConfigurationForm(): string
+    {
+        $form = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+        $panels = $this->manualConfigurationPanels($this->ReadPropertyString('DeviceType'));
+        foreach ($form['elements'] as &$element) {
+            $name = $element['name'] ?? '';
+            if (isset($panels[$name])) {
+                $element['visible'] = $panels[$name];
+            }
+        }
+        unset($element);
+        return json_encode($form);
     }
 
     /**
@@ -785,6 +808,16 @@ class MideaAir extends IPSModuleStrict
         foreach ($properties as $property => $value) {
             IPS_SetProperty($this->InstanceID, $property, (bool) $value);
         }
+    }
+
+    /** Sichtbarkeit der Panels „Manuelle Konfiguration“ je Gerätetyp, wie in ApplyChanges gilt alles außer Entfeuchter als Klimaanlage. */
+    private function manualConfigurationPanels(string $deviceType): array
+    {
+        $dehumidifier = $deviceType === self::DEVICE_DEHUMIDIFIER;
+        return [
+            'PanelAircon'       => !$dehumidifier,
+            'PanelDehumidifier' => $dehumidifier,
+        ];
     }
 
     /** Speichert das B5-Ergebnis. */

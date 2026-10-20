@@ -39,7 +39,7 @@ Die Cloud wird ausschließlich zur einmaligen Token-Ermittlung genutzt – danac
 
 | Einstellung | Beschreibung |
 |---|---|
-| Gerätetyp | `Klimaanlage (0xAC)` oder `Entfeuchter (0xA1)` |
+| Gerätetyp | `Klimaanlage (0xAC)` oder `Entfeuchter (0xA1)`. Das Formular zeigt nur die manuelle Konfiguration des gewählten Typs und schaltet beim Umstellen sofort um. |
 | IP-Adresse | Lokale IP-Adresse des Geräts |
 | TCP-Port | Standard: `6444` |
 | Aktualisierungsintervall | Abfrageintervall in Sekunden (0 = deaktiviert) |

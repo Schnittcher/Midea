@@ -4,6 +4,7 @@
             "type": "Select",
             "name": "DeviceType",
             "caption": "Device Type",
+            "onChange": "IPS_RequestAction($id, 'DeviceType', $DeviceType);",
             "options": [
                 {
                     "label": "Dehumidifier (0xA1)",
@@ -69,6 +70,7 @@
         },
         {
             "type": "ExpansionPanel",
+            "name": "PanelAircon",
             "caption": "Manual Configuration (Air Conditioner)",
             "items": [
                 {
@@ -174,6 +176,7 @@
         },
         {
             "type": "ExpansionPanel",
+            "name": "PanelDehumidifier",
             "caption": "Manual Configuration (Dehumidifier)",
             "items": [
                 {
