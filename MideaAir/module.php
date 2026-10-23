@@ -24,11 +24,11 @@ class MideaAir extends IPSModuleStrict
     public const TCP_PORT = 6444;
     public const SOCKET_TIMEOUT = 5;
 
-    // Dehumidifier: 3 levels only
+    // Dehumidifier: 3 levels only (40/60/80, am Comfee 0xA1 gemessen, wie midea-beautiful-air)
     public const DEHUMIDIFIER_FAN_SPEED_OPTIONS = [
-        ['Value' => 40,  'Caption' => 'Silent', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 80,  'Caption' => 'Medium', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-        ['Value' => 127, 'Caption' => 'High',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+        ['Value' => 40, 'Caption' => 'Low',    'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+        ['Value' => 60, 'Caption' => 'Medium', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+        ['Value' => 80, 'Caption' => 'High',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
     ];
 
     public const SWING_OPTIONS = [
@@ -828,12 +828,13 @@ class MideaAir extends IPSModuleStrict
         $this->RegisterVariableInteger('Mode', $this->Translate('Mode'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
             'OPTIONS'      => json_encode($this->translateOptions([
-                ['Value' => 1, 'Caption' => 'Auto',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 2, 'Caption' => 'Normal', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 3, 'Caption' => 'Fast',   'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 4, 'Caption' => 'Sleep',  'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 6, 'Caption' => 'Dry',    'IconActive' => false, 'IconValue' => '', 'Color' => -1],
-                ['Value' => 7, 'Caption' => 'Clean',  'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+                // 1–4 am Comfee 0xA1 gemessen, 6/7 aus homeassistant-midea-air-appliances-lan (nur bei B5 0x14)
+                ['Value' => 1, 'Caption' => 'Target Humidity', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+                ['Value' => 2, 'Caption' => 'Continuous',      'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+                ['Value' => 3, 'Caption' => 'Smart',           'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+                ['Value' => 4, 'Caption' => 'Dry',             'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+                ['Value' => 6, 'Caption' => 'Purifier',        'IconActive' => false, 'IconValue' => '', 'Color' => -1],
+                ['Value' => 7, 'Caption' => 'Antimould',       'IconActive' => false, 'IconValue' => '', 'Color' => -1],
             ])),
         ], 20);
 
@@ -844,8 +845,8 @@ class MideaAir extends IPSModuleStrict
 
         $this->RegisterVariableInteger('TargetHumidity', $this->Translate('Target Humidity'), [
             'PRESENTATION' => VARIABLE_PRESENTATION_SLIDER,
-            'MIN'          => 30,
-            'MAX'          => 80,
+            'MIN'          => 35,
+            'MAX'          => 85,
             'STEP_SIZE'    => 5,
             'SUFFIX'       => ' %',
         ], 40);

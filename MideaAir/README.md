@@ -164,9 +164,9 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | Ident | Bezeichnung | Typ | Steuerbar |
 |---|---|---|---|
 | `Running` | Betrieb | Boolean | ✅ |
-| `Mode` | Modus | Integer | ✅ (1=Auto, 2=Normal, 3=Schnell, 4=Schlaf, 6=Trocknen, 7=Reinigen) |
-| `FanSpeed` | Lüfterstufe | Integer | ✅ (40=Leise, 80=Mittel, 127=Hoch) |
-| `TargetHumidity` | Soll-Feuchte | Integer | ✅ (30 – 80 %) |
+| `Mode` | Modus | Integer | ✅ (1=Soll-Feuchte, 2=Dauerbetrieb, 3=Smart, 4=Trocknen, 6=Luftreinigung, 7=Schimmelschutz) |
+| `FanSpeed` | Lüfterstufe | Integer | ✅ (40=Niedrig, 60=Mittel, 80=Hoch) |
+| `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %) |
 | `CurrentHumidity` | Ist-Feuchte | Float | ❌ |
 | `IndoorTemperature` | Raumtemperatur | Float | ❌ |
 | `IonMode` | Ionisierung | Boolean | ✅ |
