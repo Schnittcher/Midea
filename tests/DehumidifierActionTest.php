@@ -29,7 +29,7 @@ class DehumidifierActionTest extends TestCase
 
     public function testSilentAndAutoAreSentUnchanged(): void
     {
-        // Rohwerte am zweiten Comfee in der App gemessen: Leise 10, Auto 11
+        // Rohwerte am Comfee CDDKE-20DEN7(EU) in der App gemessen: Leise 10, Auto 11
         foreach ([10, 11, 4] as $mode) {
             IPS_RequestAction($this->id, 'Mode', $mode);
             $this->assertSame($mode, GetValue(IPS_GetObjectIDByIdent('Mode', $this->id)));
