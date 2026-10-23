@@ -4,6 +4,7 @@
             "type": "Select",
             "name": "DeviceType",
             "caption": "Device Type",
+            "onChange": "IPS_RequestAction($id, 'DeviceType', $DeviceType);",
             "options": [
                 {
                     "label": "Dehumidifier (0xA1)",
@@ -69,6 +70,7 @@
         },
         {
             "type": "ExpansionPanel",
+            "name": "PanelAircon",
             "caption": "Manual Configuration (Air Conditioner)",
             "items": [
                 {
@@ -169,6 +171,102 @@
                     "type": "CheckBox",
                     "name": "HasCurrentPower",
                     "caption": "Power Measurement available"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "name": "PanelDehumidifier",
+            "caption": "Manual Configuration (Dehumidifier)",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "'Detect Capabilities' pre-fills these checkboxes from the device. Some devices report features they do not have, so they can be changed here.\nAfter changes click Apply – variables will be re-registered."
+                },
+                {
+                    "type": "Label",
+                    "bold": true,
+                    "caption": "Available Modes"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeTargetHumidity",
+                    "caption": "Target Humidity (1)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeContinuous",
+                    "caption": "Continuous (2)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeSmart",
+                    "caption": "Smart (3)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeDry",
+                    "caption": "Dry (4)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModePurifier",
+                    "caption": "Purifier (6)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeAntimould",
+                    "caption": "Antimould (7)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeSilent",
+                    "caption": "Silent (10)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeAuto",
+                    "caption": "Auto (11)"
+                },
+                {
+                    "type": "Label",
+                    "bold": true,
+                    "caption": "Additional Features"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumFanSpeedMedium",
+                    "caption": "Fan Speed Medium (60) available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasIonizer",
+                    "caption": "Ionizer available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasPump",
+                    "caption": "Pump available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasSwing",
+                    "caption": "Air Vanes available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasWaterLevel",
+                    "caption": "Tank Level Sensor available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasFilter",
+                    "caption": "Filter Indicator available"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumHasSleepMode",
+                    "caption": "Sleep Mode available (not reported by the device)"
                 }
             ]
         },

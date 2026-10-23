@@ -39,7 +39,7 @@ Die Cloud wird ausschließlich zur einmaligen Token-Ermittlung genutzt – danac
 
 | Einstellung | Beschreibung |
 |---|---|
-| Gerätetyp | `Klimaanlage (0xAC)` oder `Entfeuchter (0xA1)` |
+| Gerätetyp | `Klimaanlage (0xAC)` oder `Entfeuchter (0xA1)`. Das Formular zeigt nur die manuelle Konfiguration des gewählten Typs und schaltet beim Umstellen sofort um. |
 | IP-Adresse | Lokale IP-Adresse des Geräts |
 | TCP-Port | Standard: `6444` |
 | Aktualisierungsintervall | Abfrageintervall in Sekunden (0 = deaktiviert) |
@@ -96,6 +96,21 @@ Nicht unterstützte Betriebsmodi können hier deaktiviert werden. Der Modus-Ausw
 | Leistungsmessung | `CurrentPower` | Stromverbrauch in Watt |
 
 > **Hinweis:** Solange noch keine Capabilities ermittelt wurden, werden alle optionalen Variablen angezeigt. Nach dem ersten „Capabilities ermitteln" steuern ausschließlich die Checkboxen, welche Variablen registriert werden.
+
+### Manuelle Konfiguration (Entfeuchter)
+
+**„Capabilities ermitteln"** belegt diese Checkboxen aus der Meldung des Geräts vor. Manche Geräte melden Funktionen, die sie gar nicht haben, deshalb lassen sie sich danach von Hand ändern. Ab Werk ist alles aktiviert.
+
+| Checkbox | Wirkung |
+|---|---|
+| Smart (3), Trocknen (4), Luftreinigung (6), Schimmelschutz (7) | Modus in der Auswahl. Soll-Feuchte (1) und Dauerbetrieb (2) gibt es immer |
+| Lüfterstufe Mittel (60) verfügbar | Mittel in der Auswahl. Niedrig (40) und Hoch (80) gibt es immer |
+| Ionisator vorhanden | Variable `IonMode` |
+| Pumpe vorhanden | Variable `Pump` |
+| Lüftungslamellen vorhanden | Variable `VerticalSwing` |
+| Füllstandssensor vorhanden | Variable `TankLevel` |
+| Filteranzeige vorhanden | Variable `FilterIndicator` |
+| Schlafmodus vorhanden | Variable `SleepMode`. Das Gerät meldet den Schlafmodus nicht, „Capabilities ermitteln“ lässt diese Checkbox deshalb unverändert. Manche Geräte (z. B. Comfee 0xA1) reagieren nicht darauf, dann den Haken entfernen |
 
 ### Token automatisch ermitteln (Cloud-Login)
 
@@ -166,18 +181,22 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | `Running` | Betrieb | Boolean | ✅ |
 | `Mode` | Modus | Integer | ✅ (1=Soll-Feuchte, 2=Dauerbetrieb, 3=Smart, 4=Trocknen, 6=Luftreinigung, 7=Schimmelschutz) |
 | `FanSpeed` | Lüfterstufe | Integer | ✅ (40=Niedrig, 60=Mittel, 80=Hoch) |
-| `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %) |
+| `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %, andere Werte werden begrenzt) |
 | `CurrentHumidity` | Ist-Feuchte | Float | ❌ |
 | `IndoorTemperature` | Raumtemperatur | Float | ❌ |
-| `IonMode` | Ionisierung | Boolean | ✅ |
-| `Pump` | Pumpe | Boolean | ✅ |
-| `SleepMode` | Schlafmodus | Boolean | ✅ |
-| `VerticalSwing` | Lüftungslamellen | Boolean | ✅ |
+| `IonMode` | Ionisierung² | Boolean | ✅ |
+| `Pump` | Pumpe² | Boolean | ✅ |
+| `SleepMode` | Schlafmodus² | Boolean | ✅ |
+| `VerticalSwing` | Lüftungslamellen² | Boolean | ✅ |
 | `TankFull` | Tank voll | Boolean | ❌ |
-| `TankLevel` | Tankfüllstand | Integer | ❌ |
-| `FilterIndicator` | Filter reinigen | Boolean | ❌ |
+| `TankLevel` | Tankfüllstand² | Integer | ❌ |
+| `FilterIndicator` | Filter reinigen² | Boolean | ❌ |
 | `Defrosting` | Abtauen | Boolean | ❌ |
 | `ErrorCode` | Fehlercode | Integer | ❌ |
+
+Welche Modi und Lüfterstufen zur Auswahl stehen, steuert die manuelle Konfiguration (Entfeuchter).
+
+² Nur vorhanden, wenn die passende Checkbox in der manuellen Konfiguration (Entfeuchter) aktiviert ist.
 
 ## 5. Aktionsschaltflächen
 
