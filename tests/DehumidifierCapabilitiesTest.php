@@ -7,8 +7,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * Prüft, welche Modi und Variablen ein Entfeuchter nach dem gespeicherten B5-Ergebnis bekommt.
  *
- * Grundlage ist der Comfee-Mitschnitt aus B5ParserTest. Das alte Attribut ist die Ausgabe des
- * Parsers aus Bibliothek 1.0.2 (53a9fdf) für genau diesen Frame.
+ * Grundlage sind die Comfee-Mitschnitte aus B5ParserTest (MDDF-20DENEN7-WF und CDDKE-20DEN7(EU)). Das alte Attribut ist die Ausgabe des
+ * Parsers aus Bibliothek 1.0.2 (53a9fdf) für den Frame des MDDF. Für den CDDKE gibt es keins, der Weg vom
+ * Stand 1.0.2 zu einem Gerät mit 0x14 = 7 ist nicht getestet.
  */
 class DehumidifierCapabilitiesTest extends TestCase
 {
@@ -16,7 +17,7 @@ class DehumidifierCapabilitiesTest extends TestCase
 
     private const COMFEE_A1 = 'b503100201071f02010120020101cb5c';
 
-    // Zweiter Comfee (B5ParserTest), die App bietet nur Leise, Trocknen und Auto
+    // Comfee CDDKE-20DEN7(EU) aus B5ParserTest, die App bietet nur Leise, Trocknen und Auto
     private const COMFEE_A1_SILENT = 'b50410020107170201022e02010114020107797f';
 
     // Attribut 'Capabilities', wie es 1.0.2 für den Comfee-Frame gespeichert hat
