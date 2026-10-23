@@ -1,6 +1,6 @@
 # Changelog
 
-## Unveröffentlicht
+## 23.10.2026 - Version 1.0.3
 
 ### Neu
 
