@@ -4,13 +4,14 @@
 
 ### Neu
 
-- Entfeuchter: Panel „Manuelle Konfiguration (Entfeuchter)“ mit Checkboxen für die Modi Smart, Trocknen, Luftreinigung und Schimmelschutz, die Lüfterstufe Mittel sowie Ionisator, Pumpe, Lamellen und Füllstandssensor. „Capabilities ermitteln“ belegt sie aus der B5-Antwort vor, danach lassen sie sich von Hand ändern. Ab Werk ist alles aktiviert.
+- Entfeuchter: Panel „Manuelle Konfiguration (Entfeuchter)“ mit Checkboxen für alle Modi, die Lüfterstufe Mittel sowie Ionisator, Pumpe, Lamellen und Füllstandssensor. „Capabilities ermitteln“ belegt sie aus der B5-Antwort vor, danach lassen sie sich von Hand ändern. Ab Werk ist alles aktiviert.
 - Die Konfiguration zeigt nur noch die manuelle Konfiguration des gewählten Gerätetyps. Beim Umstellen des Gerätetyps schaltet sie sofort um, schon vor dem Übernehmen.
 
 ### Geändert
 
 - „Capabilities ermitteln“ zeigt statt der B5-Rohwerte die vorbelegten Checkboxen mit ✓ oder ✗ und zieht sie im offenen Formular gleich nach. Die Rohwerte stehen im Debug unter `B5`.
-- Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
+- Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz, 10 Leise, 11 Auto (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
+- Entfeuchter: Auch Soll-Feuchte und Dauerbetrieb hängen jetzt an Checkboxen. Meldet das Gerät in der B5-Antwort für 0x14 den Wert 7, belegt „Capabilities ermitteln“ nur Leise, Trocknen und Auto vor. So bietet es die App bei einem Comfee mit diesem Wert an. Wer „Capabilities ermitteln“ schon vor dem Update ausgeführt hat, sieht Leise und Auto, bis er es erneut ausführt.
 - Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
 - Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
 - Entfeuchter: Filteranzeige und Schlafmodus hängen ebenfalls an Checkboxen. „Filteranzeige vorhanden“ belegt „Capabilities ermitteln“ aus der B5-Antwort vor. Den Schlafmodus meldet das Gerät nicht, diese Checkbox setzt nur der Anwender. Beide sind ab Werk angehakt.

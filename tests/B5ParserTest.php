@@ -17,6 +17,10 @@ class B5ParserTest extends TestCase
     // Comfee-Entfeuchter 0xA1, V3, am 20.10.2026 per DetectCapabilities() mitgeschnitten
     private const COMFEE_A1 = 'b503100201071f02010120020101cb5c';
 
+    // Zweiter Comfee gleichen Modells (41377), am 23.10.2026 per DetectCapabilities() mitgeschnitten.
+    // Die App bietet Leise (10), Trocknen (4) und Auto (11). 0x2e ist unbekannt und wird übergangen.
+    private const COMFEE_A1_SILENT = 'b50410020107170201022e02010114020107797f';
+
     // Midea U-Shaped Window Unit (2022), aus den Tests von msmart-ng (test_capabilities_4).
     // Der Eintrag 0x0225 trägt 7 Bytes, danach folgt noch 0x0224 (Display).
     private const AC_U_SHAPED = 'b50912020102130201001402010015020100170201021a02010010020101250207203c203c203c00240201010102a1a0';
@@ -43,6 +47,17 @@ class B5ParserTest extends TestCase
             'humidity'        => true,
             'dry_clothes'     => true,
         ], $this->parse(self::COMFEE_A1, MideaAir::DEVICE_DEHUMIDIFIER));
+    }
+
+    public function testComfeeDehumidifierWithModeValue(): void
+    {
+        $this->assertEquals([
+            'fan_speed'       => true,
+            'fan_speed_value' => 7,
+            'filter'          => true,
+            'mode'            => true,
+            'mode_value'      => 7,
+        ], $this->parse(self::COMFEE_A1_SILENT, MideaAir::DEVICE_DEHUMIDIFIER));
     }
 
     public function testEntryAfterSevenByteValueIsRead(): void

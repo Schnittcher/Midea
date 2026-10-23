@@ -17,6 +17,8 @@ class DetectionDialogTest extends TestCase
 
     private const COMFEE_A1 = 'b503100201071f02010120020101cb5c';
 
+    private const COMFEE_A1_SILENT = 'b50410020107170201022e02010114020107797f';
+
     private const AC_U_SHAPED = 'b50912020102130201001402010015020100170201021a02010010020101250207203c203c203c00240201010102a1a0';
 
     private int $id;
@@ -37,10 +39,14 @@ class DetectionDialogTest extends TestCase
 
         $this->assertStringContainsString('Manual Configuration (Dehumidifier)', $dialog);
         $this->assertSame([
+            '✓ Target Humidity (1)',
+            '✓ Continuous (2)',
             '✓ Smart (3)',
             '✓ Dry (4)',
             '✗ Purifier (6)',
             '✗ Antimould (7)',
+            '✗ Silent (10)',
+            '✗ Auto (11)',
             '✓ Fan Speed Medium (60) available',
             '✗ Ionizer available',
             '✗ Pump available',
@@ -50,6 +56,28 @@ class DetectionDialogTest extends TestCase
         ], $this->checkboxLines($dialog));
         $this->assertFalse(IPS_GetProperty($this->id, 'DehumHasPump'));
         $this->assertTrue(IPS_GetProperty($this->id, 'DehumModeDry'));
+    }
+
+    public function testDehumidifierDialogForSilentAutoDevice(): void
+    {
+        $dialog = $this->detect(self::COMFEE_A1_SILENT, MideaAir::DEVICE_DEHUMIDIFIER);
+
+        $this->assertSame([
+            '✗ Target Humidity (1)',
+            '✗ Continuous (2)',
+            '✗ Smart (3)',
+            '✓ Dry (4)',
+            '✗ Purifier (6)',
+            '✗ Antimould (7)',
+            '✓ Silent (10)',
+            '✓ Auto (11)',
+            '✓ Fan Speed Medium (60) available',
+            '✗ Ionizer available',
+            '✗ Pump available',
+            '✗ Air Vanes available',
+            '✗ Tank Level Sensor available',
+            '✓ Filter Indicator available',
+        ], $this->checkboxLines($dialog));
     }
 
     public function testAirConditionerDialogListsCheckboxes(): void

@@ -186,7 +186,17 @@
                 {
                     "type": "Label",
                     "bold": true,
-                    "caption": "Additional Modes"
+                    "caption": "Available Modes"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeTargetHumidity",
+                    "caption": "Target Humidity (1)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeContinuous",
+                    "caption": "Continuous (2)"
                 },
                 {
                     "type": "CheckBox",
@@ -207,6 +217,16 @@
                     "type": "CheckBox",
                     "name": "DehumModeAntimould",
                     "caption": "Antimould (7)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeSilent",
+                    "caption": "Silent (10)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "DehumModeAuto",
+                    "caption": "Auto (11)"
                 },
                 {
                     "type": "Label",

@@ -88,10 +88,14 @@ class MideaAir extends IPSModuleStrict
         $this->RegisterPropertyBoolean('HasCurrentPower', false);
 
         // Manuelle Konfiguration Entfeuchter – standardmäßig alles aktiv, „Capabilities ermitteln“ belegt vor
+        $this->RegisterPropertyBoolean('DehumModeTargetHumidity', true);
+        $this->RegisterPropertyBoolean('DehumModeContinuous', true);
         $this->RegisterPropertyBoolean('DehumModeSmart', true);
         $this->RegisterPropertyBoolean('DehumModeDry', true);
         $this->RegisterPropertyBoolean('DehumModePurifier', true);
         $this->RegisterPropertyBoolean('DehumModeAntimould', true);
+        $this->RegisterPropertyBoolean('DehumModeSilent', true);
+        $this->RegisterPropertyBoolean('DehumModeAuto', true);
         $this->RegisterPropertyBoolean('DehumFanSpeedMedium', true);
         $this->RegisterPropertyBoolean('DehumHasIonizer', true);
         $this->RegisterPropertyBoolean('DehumHasPump', true);
@@ -773,22 +777,29 @@ class MideaAir extends IPSModuleStrict
      * Belegt die Entfeuchter-Checkboxen aus dem B5-Ergebnis vor (wie homeassistant-midea-air-appliances-lan).
      * Smart bei 0x1f, Trocknen bei 0x20, Luftreinigung/Schimmelschutz nach dem Wert von 0x14
      * (1, 2 oder 3 = beide), Mittel fehlt nur bei Lüfter-Wert 3 (Niedrig/Hoch).
+     * 0x14 = 7 kennt die HA-Integration nicht. Ein Comfee (Modell 41377) mit diesem Wert bietet in der App
+     * nur Leise (10), Trocknen (4) und Auto (11), ohne Soll-Feuchte und Dauerbetrieb.
      * Danach steuern die Checkboxen die Variablen und können manuell überschrieben werden.
      */
     private function dehumidifierPropertiesFromB5(array $caps): array
     {
         $modeCap = (int) ($caps['mode_value'] ?? 0);
+        $silentAuto = $modeCap === 7;
         $properties = [
-            'DehumModeSmart'      => $caps['humidity'] ?? false,
-            'DehumModeDry'        => $caps['dry_clothes'] ?? false,
-            'DehumModePurifier'   => $modeCap === 1 || $modeCap === 3,
-            'DehumModeAntimould'  => $modeCap === 2 || $modeCap === 3,
-            'DehumFanSpeedMedium' => ($caps['fan_speed_value'] ?? 0) !== 3,
-            'DehumHasIonizer'     => $caps['anion'] ?? false,
-            'DehumHasPump'        => $caps['pump'] ?? false,
-            'DehumHasSwing'       => $caps['fan_swing'] ?? false,
-            'DehumHasWaterLevel'  => $caps['water_level'] ?? false,
-            'DehumHasFilter'      => $caps['filter'] ?? false,
+            'DehumModeTargetHumidity' => !$silentAuto,
+            'DehumModeContinuous'     => !$silentAuto,
+            'DehumModeSmart'          => $caps['humidity'] ?? false,
+            'DehumModeDry'            => ($caps['dry_clothes'] ?? false) || $silentAuto,
+            'DehumModePurifier'       => $modeCap === 1 || $modeCap === 3,
+            'DehumModeAntimould'      => $modeCap === 2 || $modeCap === 3,
+            'DehumModeSilent'         => $silentAuto,
+            'DehumModeAuto'           => $silentAuto,
+            'DehumFanSpeedMedium'     => ($caps['fan_speed_value'] ?? 0) !== 3,
+            'DehumHasIonizer'         => $caps['anion'] ?? false,
+            'DehumHasPump'            => $caps['pump'] ?? false,
+            'DehumHasSwing'           => $caps['fan_swing'] ?? false,
+            'DehumHasWaterLevel'      => $caps['water_level'] ?? false,
+            'DehumHasFilter'          => $caps['filter'] ?? false,
         ];
         return array_map('boolval', $properties);
     }
@@ -1053,16 +1064,18 @@ class MideaAir extends IPSModuleStrict
         $this->EnableAction('TargetHumidity');
     }
 
-    /** Modi des Entfeuchters: Soll-Feuchte und Dauerbetrieb immer, die übrigen nach den Checkboxen. */
+    /** Modi des Entfeuchters nach den Checkboxen (Nummern wie midea-local). */
     private function dehumidifierModeOptions(): array
     {
         $modes = [
-            1 => ['Target Humidity', true],
-            2 => ['Continuous',      true],
-            3 => ['Smart',           $this->ReadPropertyBoolean('DehumModeSmart')],
-            4 => ['Dry',             $this->ReadPropertyBoolean('DehumModeDry')],
-            6 => ['Purifier',        $this->ReadPropertyBoolean('DehumModePurifier')],
-            7 => ['Antimould',       $this->ReadPropertyBoolean('DehumModeAntimould')],
+            1  => ['Target Humidity', $this->ReadPropertyBoolean('DehumModeTargetHumidity')],
+            2  => ['Continuous',      $this->ReadPropertyBoolean('DehumModeContinuous')],
+            3  => ['Smart',           $this->ReadPropertyBoolean('DehumModeSmart')],
+            4  => ['Dry',             $this->ReadPropertyBoolean('DehumModeDry')],
+            6  => ['Purifier',        $this->ReadPropertyBoolean('DehumModePurifier')],
+            7  => ['Antimould',       $this->ReadPropertyBoolean('DehumModeAntimould')],
+            10 => ['Silent',          $this->ReadPropertyBoolean('DehumModeSilent')],
+            11 => ['Auto',            $this->ReadPropertyBoolean('DehumModeAuto')],
         ];
 
         $options = [];

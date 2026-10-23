@@ -16,6 +16,9 @@ class DehumidifierCapabilitiesTest extends TestCase
 
     private const COMFEE_A1 = 'b503100201071f02010120020101cb5c';
 
+    // Zweiter Comfee (B5ParserTest), die App bietet nur Leise, Trocknen und Auto
+    private const COMFEE_A1_SILENT = 'b50410020107170201022e02010114020107797f';
+
     // Attribut 'Capabilities', wie es 1.0.2 für den Comfee-Frame gespeichert hat
     private const COMFEE_A1_STORED_BY_1_0_2 = '{"fan_speed":true,"fan_speed_value":7,"humidity":true}';
 
@@ -44,7 +47,7 @@ class DehumidifierCapabilitiesTest extends TestCase
         (new ReflectionMethod($this->module, 'WriteAttributeString'))->invoke($this->module, 'Capabilities', self::COMFEE_A1_STORED_BY_1_0_2);
         $this->registerVariables();
 
-        $this->assertSame([1, 2, 3, 4, 6, 7], $this->modeValues());
+        $this->assertSame([1, 2, 3, 4, 6, 7, 10, 11], $this->modeValues());
         foreach (self::OPTIONAL_VARIABLES as $ident) {
             $this->assertTrue($this->exists($ident), "$ident darf nicht gelöscht werden");
         }
@@ -57,6 +60,18 @@ class DehumidifierCapabilitiesTest extends TestCase
         $this->assertSame([1, 2, 3, 4], $this->modeValues());
         $this->assertSame([40, 60, 80], $this->fanSpeedValues());
         foreach (self::OPTIONAL_VARIABLES as $ident) {
+            $this->assertFalse($this->exists($ident), "$ident meldet der Comfee nicht");
+        }
+    }
+
+    public function testModeValueSevenMeansSilentDryAuto(): void
+    {
+        $this->detect(self::COMFEE_A1_SILENT);
+
+        $this->assertSame([4, 10, 11], $this->modeValues());
+        $this->assertSame([40, 60, 80], $this->fanSpeedValues());
+        $this->assertTrue($this->exists('FilterIndicator'));
+        foreach (['IonMode', 'Pump', 'VerticalSwing', 'TankLevel'] as $ident) {
             $this->assertFalse($this->exists($ident), "$ident meldet der Comfee nicht");
         }
     }

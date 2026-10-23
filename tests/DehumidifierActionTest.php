@@ -27,6 +27,15 @@ class DehumidifierActionTest extends TestCase
         IPS_ApplyChanges($this->id);
     }
 
+    public function testSilentAndAutoAreSentUnchanged(): void
+    {
+        // Rohwerte am zweiten Comfee in der App gemessen: Leise 10, Auto 11
+        foreach ([10, 11, 4] as $mode) {
+            IPS_RequestAction($this->id, 'Mode', $mode);
+            $this->assertSame($mode, GetValue(IPS_GetObjectIDByIdent('Mode', $this->id)));
+        }
+    }
+
     public function testTargetHumidityIsLimitedToSliderRange(): void
     {
         // 35 bis 85 % wie der Slider, die Comfee-App und die HA-Integration (MIN/MAX_TARGET_HUMIDITY)
