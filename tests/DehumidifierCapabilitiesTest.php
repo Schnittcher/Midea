@@ -8,7 +8,8 @@ use PHPUnit\Framework\TestCase;
  * Prüft, welche Modi und Variablen ein Entfeuchter nach dem gespeicherten B5-Ergebnis bekommt.
  *
  * Grundlage sind die Comfee-Mitschnitte aus B5ParserTest (MDDF-20DENEN7-WF und CDDKE-20DEN7(EU)). Das alte Attribut ist die Ausgabe des
- * Parsers aus Bibliothek 1.0.2 (53a9fdf) für genau diesen Frame.
+ * Parsers aus Bibliothek 1.0.2 (53a9fdf) für den Frame des MDDF. Für den CDDKE gibt es keins, der Weg vom
+ * Stand 1.0.2 zu einem Gerät mit 0x14 = 7 ist nicht getestet.
  */
 class DehumidifierCapabilitiesTest extends TestCase
 {

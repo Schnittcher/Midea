@@ -103,7 +103,7 @@ Nicht unterstützte Betriebsmodi können hier deaktiviert werden. Der Modus-Ausw
 
 | Checkbox | Wirkung |
 |---|---|
-| Smart (3), Trocknen (4), Luftreinigung (6), Schimmelschutz (7) | Modus in der Auswahl. Soll-Feuchte (1) und Dauerbetrieb (2) gibt es immer |
+| Soll-Feuchte (1), Dauerbetrieb (2), Smart (3), Trocknen (4), Luftreinigung (6), Schimmelschutz (7), Leise (10), Auto (11) | Modus in der Auswahl. Meldet das Gerät für 0x14 den Wert 7, belegt „Capabilities ermitteln“ nur Trocknen, Leise und Auto vor (so bietet es die App beim Comfee CDDKE-20DEN7(EU) an). Sonst sind Soll-Feuchte und Dauerbetrieb vorbelegt, dazu die gemeldeten Modi, Leise und Auto aber nicht. Einen Modus, den es nicht kennt, beantwortet ein Comfee MDDF-20DENEN7-WF mit Trocknen |
 | Lüfterstufe Mittel (60) verfügbar | Mittel in der Auswahl. Niedrig (40) und Hoch (80) gibt es immer |
 | Ionisator vorhanden | Variable `IonMode` |
 | Pumpe vorhanden | Variable `Pump` |
@@ -179,8 +179,8 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 | Ident | Bezeichnung | Typ | Steuerbar |
 |---|---|---|---|
 | `Running` | Betrieb | Boolean | ✅ |
-| `Mode` | Modus | Integer | ✅ (1=Soll-Feuchte, 2=Dauerbetrieb, 3=Smart, 4=Trocknen, 6=Luftreinigung, 7=Schimmelschutz) |
-| `FanSpeed` | Lüfterstufe | Integer | ✅ (40=Niedrig, 60=Mittel, 80=Hoch) |
+| `Mode` | Modus | Integer | ✅ (1=Soll-Feuchte, 2=Dauerbetrieb, 3=Smart, 4=Trocknen, 6=Luftreinigung, 7=Schimmelschutz, 10=Leise, 11=Auto) |
+| `FanSpeed` | Lüfterstufe | Integer | ✅ (40=Niedrig, 60=Mittel, 80=Hoch)³ |
 | `TargetHumidity` | Soll-Feuchte | Integer | ✅ (35 – 85 %, andere Werte werden begrenzt) |
 | `CurrentHumidity` | Ist-Feuchte | Float | ❌ |
 | `IndoorTemperature` | Raumtemperatur | Float | ❌ |
@@ -197,6 +197,8 @@ Nach **„Capabilities ermitteln"** werden die Checkboxen automatisch aus dem B5
 Welche Modi und Lüfterstufen zur Auswahl stehen, steuert die manuelle Konfiguration (Entfeuchter).
 
 ² Nur vorhanden, wenn die passende Checkbox in der manuellen Konfiguration (Entfeuchter) aktiviert ist.
+
+³ In Trocknen und Leise legt das Gerät die Lüfterstufe selbst fest, in Trocknen auf Hoch, in Leise auf Niedrig. Beim Wechsel in einen dieser Modi stellt das Modul die Stufe entsprechend ein, Lüfterbefehle weist es danach mit einer Warnung ab, bis ein anderer Modus gewählt ist.
 
 ## 5. Aktionsschaltflächen
 

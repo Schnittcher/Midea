@@ -61,16 +61,19 @@ class MideaAir extends IPSModuleStrict
     // Wert des B5-Schlüssels 0x10 beim Entfeuchter, wenn die Lüfterstufe Mittel fehlt (nur Niedrig und Hoch)
     private const B5_DEHUMIDIFIER_FAN_LOW_HIGH = 3;
 
-    // Beschriftung und Checkbox je Modus, in der Reihenfolge der Auswahl
+    // Beschriftung, Checkbox und feste Lüfterstufe je Modus, in der Reihenfolge der Auswahl. Eine feste Stufe
+    // geht beim Wechsel in den Modus mit, danach ist der Lüfter nicht einstellbar. Trocknen: Beide Comfee
+    // stellen selbst 80 ein (tests/fixtures). Leise: Das Gerät meldet jede mitgeschickte Stufe zurück, der
+    // Lüfter bleibt aber leise (Hörtest 23.10.2026), die App schickt 40.
     private const DEHUMIDIFIER_MODES = [
-        self::DEHUMIDIFIER_MODE_TARGET_HUMIDITY => ['Target Humidity', 'DehumModeTargetHumidity'],
-        self::DEHUMIDIFIER_MODE_CONTINUOUS      => ['Continuous',      'DehumModeContinuous'],
-        self::DEHUMIDIFIER_MODE_SMART           => ['Smart',           'DehumModeSmart'],
-        self::DEHUMIDIFIER_MODE_DRY             => ['Dry',             'DehumModeDry'],
-        self::DEHUMIDIFIER_MODE_PURIFIER        => ['Purifier',        'DehumModePurifier'],
-        self::DEHUMIDIFIER_MODE_ANTIMOULD       => ['Antimould',       'DehumModeAntimould'],
-        self::DEHUMIDIFIER_MODE_SILENT          => ['Silent',          'DehumModeSilent'],
-        self::DEHUMIDIFIER_MODE_AUTO            => ['Auto',            'DehumModeAuto'],
+        self::DEHUMIDIFIER_MODE_TARGET_HUMIDITY => ['Target Humidity', 'DehumModeTargetHumidity', null],
+        self::DEHUMIDIFIER_MODE_CONTINUOUS      => ['Continuous',      'DehumModeContinuous',     null],
+        self::DEHUMIDIFIER_MODE_SMART           => ['Smart',           'DehumModeSmart',          null],
+        self::DEHUMIDIFIER_MODE_DRY             => ['Dry',             'DehumModeDry',            80],
+        self::DEHUMIDIFIER_MODE_PURIFIER        => ['Purifier',        'DehumModePurifier',       null],
+        self::DEHUMIDIFIER_MODE_ANTIMOULD       => ['Antimould',       'DehumModeAntimould',      null],
+        self::DEHUMIDIFIER_MODE_SILENT          => ['Silent',          'DehumModeSilent',         40],
+        self::DEHUMIDIFIER_MODE_AUTO            => ['Auto',            'DehumModeAuto',           null],
     ];
 
     // Soll-Feuchte des Entfeuchters wie in der App und der HA-Integration (MIN/MAX_TARGET_HUMIDITY)
@@ -1458,6 +1461,16 @@ class MideaAir extends IPSModuleStrict
             'VerticalSwing' => 'verticalSwing',
         ];
 
+        // Modi mit fester Lüfterstufe: Stufe beim Wechsel mitschicken, danach nichts mehr senden
+        if ($ident === 'FanSpeed' && self::dehumidifierFixedFanSpeed($state['mode']) !== null) {
+            trigger_error($this->Translate('Fan speed cannot be set in this mode'), E_USER_WARNING);
+            return;
+        }
+        $fixedFanSpeed = $ident === 'Mode' ? self::dehumidifierFixedFanSpeed((int) $value) : null;
+        if ($fixedFanSpeed !== null) {
+            $state['fanSpeed'] = $fixedFanSpeed;
+        }
+
         // Der Slider begrenzt nur die Bedienung, Skripte können jeden Wert schicken
         if ($ident === 'TargetHumidity') {
             $value = min(self::DEHUMIDIFIER_HUMIDITY_MAX, max(self::DEHUMIDIFIER_HUMIDITY_MIN, (int) $value));
@@ -1474,7 +1487,15 @@ class MideaAir extends IPSModuleStrict
         } else {
             // Optimistisch: Wert sofort setzen
             $this->SetValue($ident, $value);
+            if ($fixedFanSpeed !== null) {
+                $this->SetValue('FanSpeed', $fixedFanSpeed);
+            }
         }
+    }
+
+    private static function dehumidifierFixedFanSpeed(int $mode): ?int
+    {
+        return self::DEHUMIDIFIER_MODES[$mode][2] ?? null;
     }
 
     private function handleAirConditionerAction(string $ident, $value): void

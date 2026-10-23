@@ -1,5 +1,15 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Geändert
+
+- Entfeuchter: In Trocknen und Leise legt das Gerät die Lüfterstufe selbst fest (Hoch bzw. Niedrig). Beim Wechsel in einen dieser Modi stellt das Modul die Stufe entsprechend ein, Lüfterbefehle weist es danach mit einer Warnung ab. Bisher zeigte ein Wechsel von Trocknen nach Leise weiter Hoch an.
+
+### Fixes
+
+- Tests: Setzbefehle und Antworten zweier Comfee-Entfeuchter (MDDF-20DENEN7-WF und CDDKE-20DEN7(EU)) in allen Modi und Lüfterstufen unter `tests/fixtures/`, dazu die Antwort des MDDF auf Modi, die er nicht kennt.
+
 ## 23.10.2026 - Version 1.0.3
 
 ### Neu
@@ -11,7 +21,7 @@
 
 - „Capabilities ermitteln“ zeigt statt der B5-Rohwerte die vorbelegten Checkboxen mit ✓ oder ✗ und zieht sie im offenen Formular gleich nach. Die Rohwerte stehen im Debug unter `B5`.
 - Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz, 10 Leise, 11 Auto (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
-- Entfeuchter: Auch Soll-Feuchte und Dauerbetrieb hängen jetzt an Checkboxen. Meldet das Gerät in der B5-Antwort für 0x14 den Wert 7, belegt „Capabilities ermitteln“ nur Leise, Trocknen und Auto vor. So bietet es die App bei einem Comfee CDDKE-20DEN7(EU) mit diesem Wert an. Wer „Capabilities ermitteln“ schon vor dem Update ausgeführt hat, sieht Leise und Auto, bis er es erneut ausführt.
+- Entfeuchter: Auch Soll-Feuchte und Dauerbetrieb hängen jetzt an Checkboxen. Meldet das Gerät in der B5-Antwort für 0x14 den Wert 7, belegt „Capabilities ermitteln“ nur Leise, Trocknen und Auto vor. So bietet es die App bei einem Comfee CDDKE-20DEN7(EU) mit diesem Wert an. Das Ergebnis aus 1.0.2 enthält diese Werte noch nicht, nach dem Update stehen deshalb alle Modi zur Auswahl, bis „Capabilities ermitteln“ erneut ausgeführt wird.
 - Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
 - Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
 - Entfeuchter: Filteranzeige und Schlafmodus hängen ebenfalls an Checkboxen. „Filteranzeige vorhanden“ belegt „Capabilities ermitteln“ aus der B5-Antwort vor. Den Schlafmodus meldet das Gerät nicht, diese Checkbox setzt nur der Anwender. Beide sind ab Werk angehakt.
