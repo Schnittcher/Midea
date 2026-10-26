@@ -529,90 +529,6 @@ class MideaAir extends IPSModuleStrict
         }
     }
 
-    private function discoverTokenSmartHome(string $account, string $password, string $applianceId, string $ip, int $port): string
-    {
-        $this->SendDebug('Token', '=== START (SmartHome direkt) ===', 0);
-        [$leUdpId, $beUdpId] = $this->computeUdpIds((int) $applianceId);
-
-        try {
-            $cloud = new MideaSmartHomeCloud($account, $password);
-            $cloud->setLogger(function ($msg, $level)
-            {
-                $this->SendDebug('Cloud', $msg, 0);
-            });
-            $cloud->authenticate();
-            $this->SendDebug('Token', '✓ SmartHome-Authentifizierung erfolgreich', 0);
-
-            // Token aus Geräteliste
-            $appliances = $cloud->listAppliances();
-            foreach ($appliances as $device) {
-                if ($device['id'] === $applianceId && !empty($device['token']) && !empty($device['key'])) {
-                    $this->SendDebug('Token', '✓ Token in SmartHome-Geräteliste, teste...', 0);
-                    if ($this->testTokenConnection($ip, $port, $device['token'], $device['key'])) {
-                        IPS_SetProperty($this->InstanceID, 'Token', $device['token']);
-                        IPS_SetProperty($this->InstanceID, 'Key', $device['key']);
-                        IPS_ApplyChanges($this->InstanceID);
-                        $capsResult = $this->DetectCapabilities();
-                        return "✓ Token (SmartHome, Geräteliste) gespeichert!\n\n" . $capsResult;
-                    }
-                    break;
-                }
-            }
-
-            // UDP-IDs
-            foreach (['LE' => $leUdpId, 'BE' => $beUdpId] as $name => $udpId) {
-                $this->SendDebug('Token', "[SmartHome/$name] UDP-ID: $udpId", 0);
-                try {
-                    [$token, $key] = $cloud->getToken($udpId, $applianceId);
-                    if (empty($token) || empty($key)) {
-                        continue;
-                    }
-                    if ($this->testTokenConnection($ip, $port, $token, $key)) {
-                        IPS_SetProperty($this->InstanceID, 'Token', $token);
-                        IPS_SetProperty($this->InstanceID, 'Key', $key);
-                        IPS_ApplyChanges($this->InstanceID);
-                        $this->SendDebug('Token', "=== ERFOLG (SmartHome/$name) ===", 0);
-                        $capsResult = $this->DetectCapabilities();
-                        return "✓ Token (SmartHome-Cloud, $name) gespeichert!\n\n" . $capsResult;
-                    }
-                } catch (Exception $e) {
-                    $this->SendDebug('Token', "[SmartHome/$name] Fehler: " . $e->getMessage(), 0);
-                }
-            }
-
-            return '✗ SmartHome-Cloud: Kein Token gefunden oder Gerät nicht erreichbar';
-        } catch (Exception $e) {
-            $this->LogMessage('SmartHome Token-Ermittlung: ' . $e->getMessage(), KL_ERROR);
-            return '✗ SmartHome-Fehler: ' . $e->getMessage();
-        }
-    }
-
-    /** Berechnet LE- und BE-UDP-IDs für eine Appliance-ID. */
-    private function computeUdpIds(int $appId): array
-    {
-        $leBytes = '';
-        for ($i = 0; $i < 6; $i++) {
-            $leBytes .= chr(($appId >> ($i * 8)) & 0xFF);
-        }
-        $leDigest = hash('sha256', $leBytes, true);
-        $leResult = '';
-        for ($i = 0; $i < 16; $i++) {
-            $leResult .= chr(ord($leDigest[$i]) ^ ord($leDigest[16 + $i]));
-        }
-
-        $beBytes = '';
-        for ($i = 0; $i < 6; $i++) {
-            $beBytes .= chr(($appId >> ((6 - 1 - $i) * 8)) & 0xFF);
-        }
-        $beDigest = hash('sha256', $beBytes, true);
-        $beResult = '';
-        for ($i = 0; $i < 16; $i++) {
-            $beResult .= chr(ord($beDigest[$i]) ^ ord($beDigest[16 + $i]));
-        }
-
-        return [bin2hex($leResult), bin2hex($beResult)];
-    }
-
     /**
      * Fragt das Gerät nach seinen Capabilities (B5-Befehl).
      * Speichert die Capabilities und registriert die Variablen neu.
@@ -737,6 +653,90 @@ class MideaAir extends IPSModuleStrict
             $this->LogMessage('ApplianceID-Ermittlung fehlgeschlagen: ' . $e->getMessage(), KL_ERROR);
             return '✗ Fehler: ' . $e->getMessage();
         }
+    }
+
+    private function discoverTokenSmartHome(string $account, string $password, string $applianceId, string $ip, int $port): string
+    {
+        $this->SendDebug('Token', '=== START (SmartHome direkt) ===', 0);
+        [$leUdpId, $beUdpId] = $this->computeUdpIds((int) $applianceId);
+
+        try {
+            $cloud = new MideaSmartHomeCloud($account, $password);
+            $cloud->setLogger(function ($msg, $level)
+            {
+                $this->SendDebug('Cloud', $msg, 0);
+            });
+            $cloud->authenticate();
+            $this->SendDebug('Token', '✓ SmartHome-Authentifizierung erfolgreich', 0);
+
+            // Token aus Geräteliste
+            $appliances = $cloud->listAppliances();
+            foreach ($appliances as $device) {
+                if ($device['id'] === $applianceId && !empty($device['token']) && !empty($device['key'])) {
+                    $this->SendDebug('Token', '✓ Token in SmartHome-Geräteliste, teste...', 0);
+                    if ($this->testTokenConnection($ip, $port, $device['token'], $device['key'])) {
+                        IPS_SetProperty($this->InstanceID, 'Token', $device['token']);
+                        IPS_SetProperty($this->InstanceID, 'Key', $device['key']);
+                        IPS_ApplyChanges($this->InstanceID);
+                        $capsResult = $this->DetectCapabilities();
+                        return "✓ Token (SmartHome, Geräteliste) gespeichert!\n\n" . $capsResult;
+                    }
+                    break;
+                }
+            }
+
+            // UDP-IDs
+            foreach (['LE' => $leUdpId, 'BE' => $beUdpId] as $name => $udpId) {
+                $this->SendDebug('Token', "[SmartHome/$name] UDP-ID: $udpId", 0);
+                try {
+                    [$token, $key] = $cloud->getToken($udpId, $applianceId);
+                    if (empty($token) || empty($key)) {
+                        continue;
+                    }
+                    if ($this->testTokenConnection($ip, $port, $token, $key)) {
+                        IPS_SetProperty($this->InstanceID, 'Token', $token);
+                        IPS_SetProperty($this->InstanceID, 'Key', $key);
+                        IPS_ApplyChanges($this->InstanceID);
+                        $this->SendDebug('Token', "=== ERFOLG (SmartHome/$name) ===", 0);
+                        $capsResult = $this->DetectCapabilities();
+                        return "✓ Token (SmartHome-Cloud, $name) gespeichert!\n\n" . $capsResult;
+                    }
+                } catch (Exception $e) {
+                    $this->SendDebug('Token', "[SmartHome/$name] Fehler: " . $e->getMessage(), 0);
+                }
+            }
+
+            return '✗ SmartHome-Cloud: Kein Token gefunden oder Gerät nicht erreichbar';
+        } catch (Exception $e) {
+            $this->LogMessage('SmartHome Token-Ermittlung: ' . $e->getMessage(), KL_ERROR);
+            return '✗ SmartHome-Fehler: ' . $e->getMessage();
+        }
+    }
+
+    /** Berechnet LE- und BE-UDP-IDs für eine Appliance-ID. */
+    private function computeUdpIds(int $appId): array
+    {
+        $leBytes = '';
+        for ($i = 0; $i < 6; $i++) {
+            $leBytes .= chr(($appId >> ($i * 8)) & 0xFF);
+        }
+        $leDigest = hash('sha256', $leBytes, true);
+        $leResult = '';
+        for ($i = 0; $i < 16; $i++) {
+            $leResult .= chr(ord($leDigest[$i]) ^ ord($leDigest[16 + $i]));
+        }
+
+        $beBytes = '';
+        for ($i = 0; $i < 6; $i++) {
+            $beBytes .= chr(($appId >> ((6 - 1 - $i) * 8)) & 0xFF);
+        }
+        $beDigest = hash('sha256', $beBytes, true);
+        $beResult = '';
+        for ($i = 0; $i < 16; $i++) {
+            $beResult .= chr(ord($beDigest[$i]) ^ ord($beDigest[16 + $i]));
+        }
+
+        return [bin2hex($leResult), bin2hex($beResult)];
     }
 
     /**

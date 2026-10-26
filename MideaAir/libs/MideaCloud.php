@@ -308,10 +308,10 @@ class MideaCloud
  */
 class MideaSmartHomeCloud
 {
-    private const APP_ID   = '1010';
-    private const APP_KEY  = 'ac21b9f9cbfe4ca5a88562ef25e2b768';
+    private const APP_ID = '1010';
+    private const APP_KEY = 'ac21b9f9cbfe4ca5a88562ef25e2b768';
     private const API_BASE = 'https://mp-prod.appsmb.com/mas/v5/app/proxy?alias=';
-    private const IOT_KEY  = 'meicloud';
+    private const IOT_KEY = 'meicloud';
     private const HMAC_KEY = 'PROD_VnoClJI9aikS8dyy';
 
     // authorization: Basic base64(APP_KEY:IOT_KEY) – wie midea-local
@@ -320,16 +320,16 @@ class MideaSmartHomeCloud
     private string $account;
     private string $password;
     private string $deviceId;
-    private string $loginId     = '';
-    private string $uid         = '';
+    private string $loginId = '';
+    private string $uid = '';
     private string $accessToken = '';
-    private string $apiBase     = self::API_BASE;
+    private string $apiBase = self::API_BASE;
 
     private $logger = null;
 
     public function __construct(string $account, string $password)
     {
-        $this->account  = $account;
+        $this->account = $account;
         $this->password = $password;
         $this->deviceId = md5($account);
     }
@@ -353,7 +353,7 @@ class MideaSmartHomeCloud
             $this->log('reRoute: kein masUrl, bleibe bei ' . self::API_BASE);
         }
         $this->loginId = $this->fetchLoginId();
-        $this->log("loginId erhalten");
+        $this->log('loginId erhalten');
         $this->login();
         $this->log("authenticate() FERTIG, uid={$this->uid}");
     }
@@ -466,7 +466,7 @@ class MideaSmartHomeCloud
             throw new RuntimeException('SmartHome Login: uid fehlt. Antwort: ' . json_encode($result));
         }
 
-        $this->uid         = (string) $result['uid'];
+        $this->uid = (string) $result['uid'];
         $this->accessToken = (string) ($result['mdata']['accessToken']
                                     ?? $result['mdata']['tokenPwdInfo']['tokenPwd']
                                     ?? '');
@@ -511,7 +511,7 @@ class MideaSmartHomeCloud
                 return array_is_list($value) ? '[]' : '{}';
             }
             if (array_is_list($value)) {
-                return '[' . implode(', ', array_map(fn($v) => $this->jsonPython($v), $value)) . ']';
+                return '[' . implode(', ', array_map(fn ($v) => $this->jsonPython($v), $value)) . ']';
             }
             $items = [];
             foreach ($value as $k => $v) {
@@ -557,11 +557,11 @@ class MideaSmartHomeCloud
             $body['reqId'] = bin2hex(random_bytes(16));
         }
 
-        $url      = $this->apiBase . $endpoint;
-        $random   = bin2hex(random_bytes(16));
+        $url = $this->apiBase . $endpoint;
+        $random = bin2hex(random_bytes(16));
         // Python-kompatible Serialisierung (`: ` und `, ` wie json.dumps-Default)
         $jsonData = $this->jsonPython($body);
-        $sign     = $this->sign($jsonData, $random);
+        $sign = $this->sign($jsonData, $random);
         $this->log("POST $endpoint | body=" . substr($jsonData, 0, 200));
 
         $headers = [
@@ -586,8 +586,8 @@ class MideaSmartHomeCloud
         ]);
 
         $response = curl_exec($ch);
-        $errno    = curl_errno($ch);
-        $error    = curl_error($ch);
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
         curl_close($ch);
 
         if ($errno !== 0 || $response === false) {
