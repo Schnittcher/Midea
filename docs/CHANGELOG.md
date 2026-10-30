@@ -4,37 +4,32 @@
 
 ### Neu
 
-- Entfeuchter: Panel „Manuelle Konfiguration (Entfeuchter)“ mit Checkboxen für alle Modi, die Lüfterstufe Mittel sowie Ionisator, Pumpe, Lamellen und Füllstandssensor. „Capabilities ermitteln“ belegt sie aus der B5-Antwort vor, danach lassen sie sich von Hand ändern. Ab Werk ist alles aktiviert.
-- Die Konfiguration zeigt nur noch die manuelle Konfiguration des gewählten Gerätetyps. Beim Umstellen des Gerätetyps schaltet sie sofort um, schon vor dem Übernehmen.
-
-### Geändert
-
-- „Capabilities ermitteln“ zeigt statt der B5-Rohwerte die vorbelegten Checkboxen mit ✓ oder ✗ und zieht sie im offenen Formular gleich nach. Die Rohwerte stehen im Debug unter `B5`.
-- Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz, 10 Leise, 11 Auto (vorher Auto, Normal, Schnell, Schlaf). Skripte, die den Modus setzen, müssen angepasst werden.
-- Entfeuchter: Auch Soll-Feuchte und Dauerbetrieb hängen jetzt an Checkboxen. Meldet das Gerät in der B5-Antwort für 0x14 den Wert 7, belegt „Capabilities ermitteln“ nur Leise, Trocknen und Auto vor. So bietet es die App bei einem Comfee mit diesem Wert an. Wer „Capabilities ermitteln“ schon vor dem Update ausgeführt hat, sieht Leise und Auto, bis er es erneut ausführt.
-- Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40, 80 und 127). Hoch liegt damit auf 80 statt 127.
-- Soll-Feuchte 35 bis 85 % (vorher 30 bis 80). Werte außerhalb werden auch bei Aufrufen aus Skripten auf diesen Bereich begrenzt.
-- Entfeuchter: Filteranzeige und Schlafmodus hängen ebenfalls an Checkboxen. „Filteranzeige vorhanden“ belegt „Capabilities ermitteln“ aus der B5-Antwort vor. Den Schlafmodus meldet das Gerät nicht, diese Checkbox setzt nur der Anwender. Beide sind ab Werk angehakt.
-- Ionisierung, Pumpe, Lamellen, Tankfüllstand, Filteranzeige und Schlafmodus gibt es nur noch, wenn die zugehörige Checkbox gesetzt ist. Wird sie abgewählt, auch durch „Capabilities ermitteln“, löscht das Modul die Variable, und ihre Verknüpfungen und Archivzuordnung gehen verloren. Meldet das Gerät keine Filteranzeige (etwa der Comfee 0xA1), verschwindet `FilterIndicator` schon beim ersten „Capabilities ermitteln“ nach dem Update.
+- Entfeuchter: Panel „Manuelle Konfiguration (Entfeuchter)" mit Checkboxen für Modi, Lüfterstufe Mittel sowie Ionisator, Pumpe, Lamellen, Füllstandssensor, Filteranzeige und Schlafmodus. „Capabilities ermitteln" belegt sie aus der B5-Antwort vor, danach lassen sie sich von Hand ändern. Ab Werk ist alles aktiviert.
+- Die Konfiguration zeigt beim Entfeuchter nur noch die Entfeuchter-Konfiguration, bei der Klimaanlage nur die Klimaanlagen-Konfiguration. Beim Umstellen des Gerätetyps schaltet sie sofort um.
 
 ### Fixes
 
-- B5-Antwort: Die Länge jedes Eintrags kommt aus dem Längenbyte statt fest 4 Bytes. Einträge hinter einem längeren Wert (etwa 0x0225 mit 7 Bytes) gingen vorher verloren oder wurden versetzt gelesen. Einträge ohne Wert werden übersprungen.
-- Tests mit PHPUnit und den Symcon-Stubs unter `tests/`: B5-Parser, Entfeuchter-Konfiguration und Soll-Feuchte, an echten Mitschnitten.
+- B5-Antwort: Die Länge jedes Eintrags kommt aus dem Längenbyte statt fest 4 Bytes (betrifft Entfeuchter und Klimaanlage). Einträge hinter einem längeren Wert wurden vorher falsch gelesen.
+- Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz, 10 Leise, 11 Auto (vorher Auto/Normal/Schnell/Schlaf). **Skripte, die den Modus setzen, müssen angepasst werden.**
+- Entfeuchter-Lüfterstufen 40 Niedrig, 60 Mittel, 80 Hoch (vorher 40/80/127). **Hoch liegt damit auf 80 statt 127.**
+- Soll-Feuchte 35 bis 85 % (vorher 30 bis 80).
+- „Capabilities ermitteln" zeigt statt B5-Rohwerten die vorbelegten Checkboxen mit ✓ oder ✗.
+- Ionisierung, Pumpe, Lamellen, Tankfüllstand, Filteranzeige und Schlafmodus gibt es nur noch, wenn die zugehörige Checkbox gesetzt ist. Wird sie abgewählt, löscht das Modul die Variable.
 
-## 19.10.2026 - Version 1.0.1
-
-### Fixes
-
-- README: `SmartHome (mp-prod.appsmb.com)` als Standard-App und empfohlene Option ergänzt
-- SmartHome-Cloud-Authentifizierung vollständig korrigiert: `pushToken` in Login-`iotData` ergänzt (fehlte, behebt Code 3106); `accessToken` aus `mdata.accessToken` (nicht `tokenPwdInfo.tokenPwd`, behebt Code 40002); Login-`iotData` auf msmart-Referenz reduziert (`format`, `language`, `platformId`, `deviceId` entfernt); `deviceId` in `data`-Sektion ergänzt; `format`/`clientType` als Integer; Doppel-Slash-Bug in `reRoute()` behoben (behebt Code 40404)
-
-## 17.10.2026 - Version 1.0
+## 19.10.2026 - Version 1.0.2
 
 ### Neu
 
-- SmartHome-Cloud-Unterstützung (`mp-prod.appsmb.com`): Automatischer Fallback als Stufe 4 bei Token-Ermittlung; direkte Auswahl über App-Dropdown möglich
-- App-Option „SmartHome (mp-prod.appsmb.com)" für neuere EU-Accounts
+- App-Option „SmartHome (mp-prod.appsmb.com)" für neuere Accounts, die mit den bisherigen App-Optionen keinen Token erhalten; wird als Standard vorausgewählt
+
+### Fixes
+
+- SmartHome-Cloud-Authentifizierung vollständig korrigiert (Token-Ermittlung funktioniert jetzt zuverlässig)
+
+## 17.10.2026 - Version 1.0.1
+
+### Neu
+
 - EU-Cloud-Server (`mapp-eu.appsmb.com`) für europäische Accounts
 - App-Optionen „NetHome Plus (EU)" und „Midea Air (EU)" in der Konfiguration
 - Stromverbrauchsmessung: Antworttyp 0xB5 (16-Bit Big-Endian an b[19..20], Einheit 0,01 W)
@@ -47,12 +42,6 @@
 - `RequestAction` mit korrekten Type Hints (`string $Ident, mixed $Value`)
 - Innenraumfeuchtigkeit nutzt korrekte Property `$humidity` (statt `$indoorHumidity`)
 - Spendenblock in der Konfigurationsmaske auf Deutsch
-
-## 26.05.2026 - Version 1.0 Beta
-
-### Neu
-
-- Erstveröffentlichung (Beta)
 
 ## 28.06.2025 - Version 1.0 Build 1 Beta
 
@@ -69,3 +58,9 @@
 
 - Polling-Intervall: Untergrenze von 10 Sekunden entfernt — beliebiger Wert konfigurierbar, 0 deaktiviert den Timer
 - V2-Betrieb ohne ApplianceID: Leere ApplianceID führt nicht mehr zu einem Fatal Error — V2-Geräte funktionieren auch ohne eingetragene ID
+
+## 26.05.2026 - Version 1.0 Beta
+
+### Neu
+
+- Erstveröffentlichung (Beta)

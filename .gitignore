@@ -1,6 +1,5 @@
 docs/adr/
 docs/FORUM_POST.md
-docs/FORUM_CHANGELOG.md
 
 # PHP CS Fixer configuration
 /.php-cs-fixer.cache
