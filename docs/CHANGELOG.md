@@ -8,6 +8,7 @@
 - Die Konfiguration zeigt beim Entfeuchter nur noch die Entfeuchter-Konfiguration, bei der Klimaanlage nur die Klimaanlagen-Konfiguration. Beim Umstellen des Gerätetyps schaltet sie sofort um.
 
 ### Fixes
+- Der Dokumentationslink der Instanzen führt jetzt zur Dokumentation auf deinsmarthome.info.
 
 - B5-Antwort: Die Länge jedes Eintrags kommt aus dem Längenbyte statt fest 4 Bytes (betrifft Entfeuchter und Klimaanlage). Einträge hinter einem längeren Wert wurden vorher falsch gelesen.
 - Entfeuchter-Modi nach dem Midea-Protokoll: 1 Soll-Feuchte, 2 Dauerbetrieb, 3 Smart, 4 Trocknen, 6 Luftreinigung, 7 Schimmelschutz, 10 Leise, 11 Auto (vorher Auto/Normal/Schnell/Schlaf). **Skripte, die den Modus setzen, müssen angepasst werden.**
