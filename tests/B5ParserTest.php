@@ -14,10 +14,11 @@ class B5ParserTest extends TestCase
 {
     private const MODULE = '{B4F7E2A9-8C3D-4F6B-9E1A-2D5C7F8B3E4A}';
 
-    // Comfee-Entfeuchter 0xA1, V3, am 20.10.2026 per DetectCapabilities() mitgeschnitten
+    // Comfee MDDF-20DENEN7-WF, 0xA1, V3, am 20.10.2026 per DetectCapabilities() mitgeschnitten.
+    // Die App bietet Dauerbetrieb (2), Smart (3) und Trocknen (4), ohne gewählten Modus Soll-Feuchte (1).
     private const COMFEE_A1 = 'b503100201071f02010120020101cb5c';
 
-    // Zweiter Comfee gleichen Modells (41377), am 23.10.2026 per DetectCapabilities() mitgeschnitten.
+    // Comfee CDDKE-20DEN7(EU), am 23.10.2026 per DetectCapabilities() mitgeschnitten.
     // Die App bietet Leise (10), Trocknen (4) und Auto (11). 0x2e ist unbekannt und wird übergangen.
     private const COMFEE_A1_SILENT = 'b50410020107170201022e02010114020107797f';
 

@@ -44,6 +44,7 @@
             "Purifier (6)": "Luftreinigung (6)",
             "Antimould (7)": "Schimmelschutz (7)",
             "Silent (10)": "Leise (10)",
+            "Fan speed cannot be set in this mode": "Lüfterstufe in diesem Modus nicht einstellbar",
             "Auto (11)": "Auto (11)",
             "Ionizer available": "Ionisator vorhanden",
             "Pump available": "Pumpe vorhanden",

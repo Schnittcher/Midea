@@ -1,0 +1,127 @@
+{
+    "geraet": "Comfee CDDKE-20DEN7(EU)",
+    "mitgeschnitten": "2026-10-23",
+    "app": "Trocknen (4), Leise (10), Auto (11); immer ein Modus gewählt",
+    "b5": "b50410020107170201022e02010114020107797f",
+    "leerlauf": {
+        "status": "c8010a287f7f003200000000000000002f5e000000000004de97",
+        "running": true,
+        "mode": 10,
+        "fanSpeed": 40,
+        "targetHumidity": 50,
+        "currentHumidity": 47,
+        "indoorTemperature": 22
+    },
+    "schritte": [
+        {
+            "state": {
+                "running": true,
+                "mode": 4,
+                "fanSpeed": 40,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a100000000000302480104280000003200000000000000000000000003018f",
+            "antwort": "c80104507f7f003200000000000000002e5e0000000000033e18",
+            "status": "c80104507f7f003200000000000000002d5e00000000000478dd"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 4,
+                "fanSpeed": 60,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a1000000000003024801043c00000032000000000000000000000000053b3f",
+            "antwort": "c80104507f7f003200000000000000002c5e00000000000565f1",
+            "status": "c80104507f7f003200000000000000002b5e00000000000657fe"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 4,
+                "fanSpeed": 80,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a1000000000003024801045000000032000000000000000000000000070064",
+            "antwort": "c80104507f7f003200000000000000002b5e000000000007094c",
+            "status": "c80104507f7f003200000000000000002b5e000000000008480b"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 10,
+                "fanSpeed": 40,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010a280000003200000000000000000000000009057f",
+            "antwort": "c8010a287f7f003200000000000000002b5e000000000009363f",
+            "status": "c8010a287f7f003200000000000000002b5e00000000000ad49f"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 10,
+                "fanSpeed": 60,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010a3c000000320000000000000000000000000b5e10",
+            "antwort": "c8010a3c7f7f003200000000000000002b5e00000000000b3728",
+            "status": "c8010a3c7f7f003200000000000000002b5e00000000000cb4a9"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 10,
+                "fanSpeed": 80,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010a50000000320000000000000000000000000d0454",
+            "antwort": "c8010a507f7f003200000000000000002b5e00000000000df257",
+            "status": "c8010a507f7f003200000000000000002b5e00000000000e1037"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 11,
+                "fanSpeed": 40,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010b28000000320000000000000000000000000f017c",
+            "antwort": "c8010b287f7f003200000000000000002b5e00000000000f7cf2",
+            "status": "c8010b287f7f003200000000000000002b5e000000000010a0cc"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 11,
+                "fanSpeed": 60,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010b3c00000032000000000000000000000000116403",
+            "antwort": "c8010b3c7f7f003200000000000000002b5e0000000000114315",
+            "status": "c8010b3c7f7f003200000000000000002b5e000000000012a1b5"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 11,
+                "fanSpeed": 80,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010b5000000032000000000000000000000000135ff2",
+            "antwort": "c8010b507f7f003200000000000000002b5e000000000013e75b",
+            "status": "c8010b507f7f003200000000000000002a5e000000000014271a"
+        },
+        {
+            "state": {
+                "running": true,
+                "mode": 10,
+                "fanSpeed": 40,
+                "targetHumidity": 50
+            },
+            "befehl": "aa20a10000000000030248010a2800000032000000000000000000000000153b3d",
+            "antwort": "c8010a287f7f003200000000000000002a5e0000000000154b1f",
+            "status": "c8010a287f7f003200000000000000002a5e000000000016a9bf"
+        }
+    ]
+}

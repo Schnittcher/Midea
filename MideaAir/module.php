@@ -38,6 +38,44 @@ class MideaAir extends IPSModuleStrict
         ['Value' => 3, 'Caption' => 'Level 3', 'IconActive' => false, 'IconValue' => '', 'Color' => -1],
     ];
 
+    // Modi des Entfeuchters, Nummern wie midea-local (10 und 11 an einem Comfee CDDKE-20DEN7(EU) gemessen).
+    // Soll-Feuchte listet die App nicht als Modus. Beim Comfee MDDF-20DENEN7-WF ist es der Zustand, wenn kein
+    // Modus gewählt ist, beim CDDKE-20DEN7(EU) ist immer ein Modus gewählt.
+    private const DEHUMIDIFIER_MODE_TARGET_HUMIDITY = 1;
+    private const DEHUMIDIFIER_MODE_CONTINUOUS = 2;
+    private const DEHUMIDIFIER_MODE_SMART = 3;
+    private const DEHUMIDIFIER_MODE_DRY = 4;
+    private const DEHUMIDIFIER_MODE_PURIFIER = 6;
+    private const DEHUMIDIFIER_MODE_ANTIMOULD = 7;
+    private const DEHUMIDIFIER_MODE_SILENT = 10;
+    private const DEHUMIDIFIER_MODE_AUTO = 11;
+
+    // Werte des B5-Schlüssels 0x14 beim Entfeuchter. 1 bis 3 wie die HA-Integration, 7 kennt sie nicht:
+    // Ein Comfee CDDKE-20DEN7(EU) mit diesem Wert bietet in der App nur Trocknen, Leise und Auto, ohne
+    // Soll-Feuchte als Grundzustand.
+    private const B5_DEHUMIDIFIER_PURIFIER = 1;
+    private const B5_DEHUMIDIFIER_ANTIMOULD = 2;
+    private const B5_DEHUMIDIFIER_PURIFIER_ANTIMOULD = 3;
+    private const B5_DEHUMIDIFIER_DRY_SILENT_AUTO = 7;
+
+    // Wert des B5-Schlüssels 0x10 beim Entfeuchter, wenn die Lüfterstufe Mittel fehlt (nur Niedrig und Hoch)
+    private const B5_DEHUMIDIFIER_FAN_LOW_HIGH = 3;
+
+    // Beschriftung, Checkbox und feste Lüfterstufe je Modus, in der Reihenfolge der Auswahl. Eine feste Stufe
+    // geht beim Wechsel in den Modus mit, danach ist der Lüfter nicht einstellbar. Trocknen: Beide Comfee
+    // stellen selbst 80 ein (tests/fixtures). Leise: Das Gerät meldet jede mitgeschickte Stufe zurück, der
+    // Lüfter bleibt aber leise (Hörtest 23.10.2026), die App schickt 40.
+    private const DEHUMIDIFIER_MODES = [
+        self::DEHUMIDIFIER_MODE_TARGET_HUMIDITY => ['Target Humidity', 'DehumModeTargetHumidity', null],
+        self::DEHUMIDIFIER_MODE_CONTINUOUS      => ['Continuous',      'DehumModeContinuous',     null],
+        self::DEHUMIDIFIER_MODE_SMART           => ['Smart',           'DehumModeSmart',          null],
+        self::DEHUMIDIFIER_MODE_DRY             => ['Dry',             'DehumModeDry',            80],
+        self::DEHUMIDIFIER_MODE_PURIFIER        => ['Purifier',        'DehumModePurifier',       null],
+        self::DEHUMIDIFIER_MODE_ANTIMOULD       => ['Antimould',       'DehumModeAntimould',      null],
+        self::DEHUMIDIFIER_MODE_SILENT          => ['Silent',          'DehumModeSilent',         40],
+        self::DEHUMIDIFIER_MODE_AUTO            => ['Auto',            'DehumModeAuto',           null],
+    ];
+
     // Soll-Feuchte des Entfeuchters wie in der App und der HA-Integration (MIN/MAX_TARGET_HUMIDITY)
     private const DEHUMIDIFIER_HUMIDITY_MIN = 35;
     private const DEHUMIDIFIER_HUMIDITY_MAX = 85;
@@ -775,33 +813,50 @@ class MideaAir extends IPSModuleStrict
 
     /**
      * Belegt die Entfeuchter-Checkboxen aus dem B5-Ergebnis vor (wie homeassistant-midea-air-appliances-lan).
-     * Smart bei 0x1f, Trocknen bei 0x20, Luftreinigung/Schimmelschutz nach dem Wert von 0x14
-     * (1, 2 oder 3 = beide), Mittel fehlt nur bei Lüfter-Wert 3 (Niedrig/Hoch).
-     * 0x14 = 7 kennt die HA-Integration nicht. Ein Comfee (Modell 41377) mit diesem Wert bietet in der App
-     * nur Leise (10), Trocknen (4) und Auto (11), ohne Soll-Feuchte und Dauerbetrieb.
      * Danach steuern die Checkboxen die Variablen und können manuell überschrieben werden.
      */
     private function dehumidifierPropertiesFromB5(array $caps): array
     {
-        $modeCap = (int) ($caps['mode_value'] ?? 0);
-        $silentAuto = $modeCap === 7;
-        $properties = [
-            'DehumModeTargetHumidity' => !$silentAuto,
-            'DehumModeContinuous'     => !$silentAuto,
-            'DehumModeSmart'          => $caps['humidity'] ?? false,
-            'DehumModeDry'            => ($caps['dry_clothes'] ?? false) || $silentAuto,
-            'DehumModePurifier'       => $modeCap === 1 || $modeCap === 3,
-            'DehumModeAntimould'      => $modeCap === 2 || $modeCap === 3,
-            'DehumModeSilent'         => $silentAuto,
-            'DehumModeAuto'           => $silentAuto,
-            'DehumFanSpeedMedium'     => ($caps['fan_speed_value'] ?? 0) !== 3,
-            'DehumHasIonizer'         => $caps['anion'] ?? false,
-            'DehumHasPump'            => $caps['pump'] ?? false,
-            'DehumHasSwing'           => $caps['fan_swing'] ?? false,
-            'DehumHasWaterLevel'      => $caps['water_level'] ?? false,
-            'DehumHasFilter'          => $caps['filter'] ?? false,
+        $properties = $this->dehumidifierModesFromB5($caps) + [
+            'DehumFanSpeedMedium' => ($caps['fan_speed_value'] ?? 0) !== self::B5_DEHUMIDIFIER_FAN_LOW_HIGH,
+            'DehumHasIonizer'     => $caps['anion'] ?? false,
+            'DehumHasPump'        => $caps['pump'] ?? false,
+            'DehumHasSwing'       => $caps['fan_swing'] ?? false,
+            'DehumHasWaterLevel'  => $caps['water_level'] ?? false,
+            'DehumHasFilter'      => $caps['filter'] ?? false,
         ];
         return array_map('boolval', $properties);
+    }
+
+    /** Checkboxen der Entfeuchter-Modi nach dem B5-Ergebnis. */
+    private function dehumidifierModesFromB5(array $caps): array
+    {
+        $modeValue = (int) ($caps['mode_value'] ?? 0);
+
+        if ($modeValue === self::B5_DEHUMIDIFIER_DRY_SILENT_AUTO) {
+            $modes = [self::DEHUMIDIFIER_MODE_DRY, self::DEHUMIDIFIER_MODE_SILENT, self::DEHUMIDIFIER_MODE_AUTO];
+        } else {
+            // Sonst wie die HA-Integration: Smart bei 0x1f, Trocknen bei 0x20, Luftreinigung/Schimmelschutz nach 0x14
+            $modes = [self::DEHUMIDIFIER_MODE_TARGET_HUMIDITY, self::DEHUMIDIFIER_MODE_CONTINUOUS];
+            if ($caps['humidity'] ?? false) {
+                $modes[] = self::DEHUMIDIFIER_MODE_SMART;
+            }
+            if ($caps['dry_clothes'] ?? false) {
+                $modes[] = self::DEHUMIDIFIER_MODE_DRY;
+            }
+            if (in_array($modeValue, [self::B5_DEHUMIDIFIER_PURIFIER, self::B5_DEHUMIDIFIER_PURIFIER_ANTIMOULD], true)) {
+                $modes[] = self::DEHUMIDIFIER_MODE_PURIFIER;
+            }
+            if (in_array($modeValue, [self::B5_DEHUMIDIFIER_ANTIMOULD, self::B5_DEHUMIDIFIER_PURIFIER_ANTIMOULD], true)) {
+                $modes[] = self::DEHUMIDIFIER_MODE_ANTIMOULD;
+            }
+        }
+
+        $properties = [];
+        foreach (self::DEHUMIDIFIER_MODES as $mode => [, $property]) {
+            $properties[$property] = in_array($mode, $modes, true);
+        }
+        return $properties;
     }
 
     /**
@@ -1064,23 +1119,12 @@ class MideaAir extends IPSModuleStrict
         $this->EnableAction('TargetHumidity');
     }
 
-    /** Modi des Entfeuchters nach den Checkboxen (Nummern wie midea-local). */
+    /** Modi des Entfeuchters nach den Checkboxen. */
     private function dehumidifierModeOptions(): array
     {
-        $modes = [
-            1  => ['Target Humidity', $this->ReadPropertyBoolean('DehumModeTargetHumidity')],
-            2  => ['Continuous',      $this->ReadPropertyBoolean('DehumModeContinuous')],
-            3  => ['Smart',           $this->ReadPropertyBoolean('DehumModeSmart')],
-            4  => ['Dry',             $this->ReadPropertyBoolean('DehumModeDry')],
-            6  => ['Purifier',        $this->ReadPropertyBoolean('DehumModePurifier')],
-            7  => ['Antimould',       $this->ReadPropertyBoolean('DehumModeAntimould')],
-            10 => ['Silent',          $this->ReadPropertyBoolean('DehumModeSilent')],
-            11 => ['Auto',            $this->ReadPropertyBoolean('DehumModeAuto')],
-        ];
-
         $options = [];
-        foreach ($modes as $value => [$caption, $available]) {
-            if ($available) {
+        foreach (self::DEHUMIDIFIER_MODES as $value => [$caption, $property]) {
+            if ($this->ReadPropertyBoolean($property)) {
                 $options[] = ['Value' => $value, 'Caption' => $caption, 'IconActive' => false, 'IconValue' => '', 'Color' => -1];
             }
         }
@@ -1396,7 +1440,7 @@ class MideaAir extends IPSModuleStrict
     {
         $state = [
             'running'       => $this->getSafeValue('Running', false),
-            'mode'          => $this->getSafeValue('Mode', 1),
+            'mode'          => $this->getSafeValue('Mode', self::DEHUMIDIFIER_MODE_TARGET_HUMIDITY),
             'fanSpeed'      => $this->getSafeValue('FanSpeed', 0x32),
             'targetHumidity'=> $this->getSafeValue('TargetHumidity', 60),
             'ionMode'       => $this->getSafeValue('IonMode', false),
@@ -1417,6 +1461,16 @@ class MideaAir extends IPSModuleStrict
             'VerticalSwing' => 'verticalSwing',
         ];
 
+        // Modi mit fester Lüfterstufe: Stufe beim Wechsel mitschicken, danach nichts mehr senden
+        if ($ident === 'FanSpeed' && self::dehumidifierFixedFanSpeed($state['mode']) !== null) {
+            trigger_error($this->Translate('Fan speed cannot be set in this mode'), E_USER_WARNING);
+            return;
+        }
+        $fixedFanSpeed = $ident === 'Mode' ? self::dehumidifierFixedFanSpeed((int) $value) : null;
+        if ($fixedFanSpeed !== null) {
+            $state['fanSpeed'] = $fixedFanSpeed;
+        }
+
         // Der Slider begrenzt nur die Bedienung, Skripte können jeden Wert schicken
         if ($ident === 'TargetHumidity') {
             $value = min(self::DEHUMIDIFIER_HUMIDITY_MAX, max(self::DEHUMIDIFIER_HUMIDITY_MIN, (int) $value));
@@ -1433,7 +1487,15 @@ class MideaAir extends IPSModuleStrict
         } else {
             // Optimistisch: Wert sofort setzen
             $this->SetValue($ident, $value);
+            if ($fixedFanSpeed !== null) {
+                $this->SetValue('FanSpeed', $fixedFanSpeed);
+            }
         }
+    }
+
+    private static function dehumidifierFixedFanSpeed(int $mode): ?int
+    {
+        return self::DEHUMIDIFIER_MODES[$mode][2] ?? null;
     }
 
     private function handleAirConditionerAction(string $ident, $value): void
